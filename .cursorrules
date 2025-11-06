@@ -1,0 +1,92 @@
+## Commit and Pull Request Rules for Cursor Agentic Mode
+
+These rules govern how the agent creates commits and pull requests in this repository. The agent MUST follow them unless explicitly instructed otherwise by the user for a one-off local experiment.
+
+### Conventional Commits (REQUIRED)
+- **Format**: `<type>(<scope>): <subject>`
+  - **type**: one of `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`
+  - **scope**: required; use the most specific package/module/dir (kebab-case), e.g. `cli`, `validator`, `github-actions`, `docs`, `deps`
+  - **subject**: imperative, present tense, concise, no trailing period; aim ≤ 72 chars
+- **Body** (optional but encouraged): explain the what/why/how in wrapped lines (~72-100 cols). Use bullet points if helpful.
+- **Breaking changes**: add a footer starting with `BREAKING CHANGE: ` describing the impact and migration steps.
+- **Issue links**: add `Closes #123` (or `Refs #123`) in the footer when relevant.
+- **Prohibited subjects**: avoid vague subjects like "update", "misc", "wip".
+
+Examples:
+
+- `feat(cli): add subcommand to validate conventional commit messages`
+- `fix(validator): handle empty scope and suggest closest directory name`
+- `refactor(core): extract parser into dedicated module`
+- `perf(check): cache parsed commit types to reduce startup time`
+- `revert(cli): revert "feat(cli): add experimental --fast flag"`
+
+Body example:
+
+```
+feat(validator): enforce required scope for all commit types
+
+We previously allowed top-level commits without a scope which made it
+hard to navigate history. This change requires a scope and adds helpful
+suggestions based on changed paths.
+
+Closes #123
+```
+
+### Agent Behavior for Commits
+- Generate 1 commit per cohesive change. Do not mix unrelated areas in a single commit.
+- Derive the **scope** from the primary changed directory or crate. If multiple, pick the user-facing one.
+- Summarize the most user-visible change first in the subject.
+- If changes are mechanical across many files (e.g., formatting), use `chore(<scope>): ...` and call it out in the body.
+- When the diff contains both code and tests, prefer a single commit unless the user asks to separate.
+- If a change introduces behavior differences, include a brief rationale and expected outcomes in the body.
+- When reverting, use `revert:` and include the original subject in quotes in the body.
+
+### Pre-commit Local Checks (Rust repo)
+- Before creating commits, attempt to run non-interactive checks:
+  - `cargo fmt --all -- --check`
+  - `cargo clippy --all-targets --all-features -D warnings`
+  - `cargo test --all --all-features`
+- If checks fail, prefer to fix and include in the same commit if small and directly related; otherwise, create follow-up commits with appropriate `fix:`/`chore:` types.
+- Validate commit message format with the local script when available:
+  - `bash scripts/conventional_commit_check.sh`
+
+### Branch Naming
+- Use: `<type>/<scope>-<short-desc>` (kebab-case short description)
+- Examples: `feat/cli-validate-commits`, `fix/validator-empty-scope`, `chore/deps-bump-anyhow`
+
+### Pull Requests (REQUIRED)
+- **PR title** MUST follow Conventional Commits (same format as commits).
+- **PR body** SHOULD include the following sections when applicable:
+  - **Summary**: 1-3 sentences of what changed and why.
+  - **Motivation**: user value and context.
+  - **Technical Notes**: key implementation details, trade-offs.
+  - **Screenshots/Logs**: if UI or CLI output matters.
+  - **Breaking changes**: migration notes.
+  - **Linked issues**: `Closes #...`, `Refs #...`.
+  - **Checklist**:
+    - [ ] Tests added/updated
+    - [ ] Docs updated
+    - [ ] `cargo fmt`, `clippy`, and tests pass locally
+- Keep PRs focused and reasonably sized. If large by necessity, mark as Draft and outline a review plan.
+- Prefer squash merge. Ensure the squash commit title remains a valid Conventional Commit.
+
+### Prohibited/Discouraged
+- Do not use "WIP" in commit or PR titles.
+- Avoid merge commits in PRs; rebase if needed for clarity.
+- Do not force-push shared branches without coordination.
+- Do not include secrets, tokens, or sensitive paths in messages.
+
+### Agent Prompts (internal guidance)
+- When the user asks to commit, the agent should:
+  1) Stage only the intended changes.
+  2) Generate a Conventional Commit message per rules above.
+  3) Run the local checks listed above when possible and include brief fixes if trivial.
+  4) Display the final message for transparency.
+- When the user asks to open a PR, the agent should:
+  1) Ensure branch name and commits comply with these rules.
+  2) Use a Conventional Commit PR title.
+  3) Populate the PR body sections and add `Closes #...` when applicable.
+
+### Notes
+- This repository already includes commit hooks/scripts to validate Conventional Commits. The agent should respect and leverage them rather than bypassing checks.
+
