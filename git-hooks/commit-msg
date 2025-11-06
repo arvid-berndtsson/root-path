@@ -35,7 +35,7 @@ if [ -z "$COMMIT_MSG_FILE" ]; then
     exit 1
 fi
 
-"$CHECKER_BIN" --file "$COMMIT_MSG_FILE"
+"$CHECKER_BIN" "$COMMIT_MSG_FILE"
 
 EXIT_CODE=$?
 

@@ -1,4 +1,4 @@
- #!/bin/sh
+#!/usr/bin/env bash
  set -euo pipefail
 
  COMMIT_MSG_FILE=${1:-}

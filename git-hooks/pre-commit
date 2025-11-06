@@ -31,7 +31,7 @@ fi
 
 # Run the checker
 if [ -n "$COMMIT_MSG_FILE" ]; then
-    "$CHECKER_BIN" --file "$COMMIT_MSG_FILE"
+    "$CHECKER_BIN" "$COMMIT_MSG_FILE"
 else
     # Read from stdin if no file provided
     "$CHECKER_BIN"
