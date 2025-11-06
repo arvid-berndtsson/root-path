@@ -1,4 +1,4 @@
- # Conventional Commit Checker (Rust)
+# cc-check (Conventional Commit Checker in Rust)
 
  Validate commit messages against the Conventional Commits specification.
 
@@ -28,7 +28,7 @@
 - `--no-trailing-period=false` allow trailing period
 - `--format json` machine-readable output (`{"ok":true}` or `{ "ok": false, "error": "..." }`)
 
- ## Pre-commit integration
+## Pre-commit integration
 
  This repository includes a `.pre-commit-config.yaml` configured for the `commit-msg` stage using a local hook:
 
@@ -57,11 +57,32 @@
  cargo build --release
  ```
 
+## Publishing to crates.io
+
+This repository is configured to publish to crates.io using GitHub Actions:
+
+- Pull requests targeting `main` will run `cargo publish --dry-run` to validate the package.
+- Pushing a tag named `vX.Y.Z` to the repository will trigger a publish to crates.io.
+
+Setup steps:
+
+1. Create a crates.io API token in your account (`Settings` → `API Tokens`).
+2. Add the token to this repository secrets as `CARGO_REGISTRY_TOKEN` (`Settings` → `Secrets and variables` → `Actions`).
+3. Bump the version in `Cargo.toml` and create a tag:
+
+   ```bash
+   git commit -am "chore(release): vX.Y.Z"
+   git tag vX.Y.Z
+   git push origin main --tags
+   ```
+
+The workflow will build, test, dry-run, and then publish the crate.
+
  ## License
 
  MIT
 
-# Conventional Commit Checker
+# cc-check
 
 A Rust-based tool to validate git commit messages against the [Conventional Commits](https://www.conventionalcommits.org/) specification. This tool hooks into git's commit-msg hook to automatically validate commit messages.
 

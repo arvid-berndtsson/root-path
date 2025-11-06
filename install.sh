@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Installation script for conventional-commit-checker git hook
+# Installation script for cc-check git hook
 #
 
 set -e
@@ -18,7 +18,7 @@ COMMIT_MSG_HOOK="$HOOKS_DIR/commit-msg"
 HOOK_SCRIPT="$SCRIPT_DIR/git-hooks/commit-msg"
 
 # Build the Rust project
-echo "Building conventional-commit-checker..."
+echo "Building cc-check..."
 cargo build --release
 
 # Create hooks directory if it doesn't exist

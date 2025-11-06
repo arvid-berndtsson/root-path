@@ -1,4 +1,4 @@
- use conv_commit_check::{first_meaningful_line, validate_header};
+ use cc_check::{first_meaningful_line, validate_header};
  
  fn allowed() -> Vec<String> {
      vec![
