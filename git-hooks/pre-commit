@@ -9,21 +9,21 @@ COMMIT_MSG_FILE="$1"
 # Find the repository root
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 
-# Get the path to the conventional-commit-checker binary
+# Get the path to the cc-check binary
 # Try release build first
-CHECKER_BIN="$REPO_ROOT/target/release/conventional-commit-checker"
+CHECKER_BIN="$REPO_ROOT/target/release/cc-check"
 
 # If release binary doesn't exist, try debug build
 if [ ! -f "$CHECKER_BIN" ]; then
-    CHECKER_BIN="$REPO_ROOT/target/debug/conventional-commit-checker"
+    CHECKER_BIN="$REPO_ROOT/target/debug/cc-check"
 fi
 
 # If still not found, try PATH
 if [ ! -f "$CHECKER_BIN" ]; then
-    CHECKER_BIN="conventional-commit-checker"
+    CHECKER_BIN="cc-check"
     # Check if it exists in PATH
     if ! command -v "$CHECKER_BIN" >/dev/null 2>&1; then
-        echo "Error: conventional-commit-checker not found."
+        echo "Error: cc-check not found."
         echo "Please build it with: cargo build --release"
         exit 1
     fi

@@ -13,7 +13,7 @@ fn write_temp(contents: &str) -> NamedTempFile {
 #[test]
 fn cli_accepts_valid_commit_text() {
     let file = write_temp("feat: add thing\n\nbody");
-    Command::cargo_bin("conventional-commit-checker")
+    Command::cargo_bin("cc-check")
         .unwrap()
         .arg(file.path())
         .assert()
@@ -23,7 +23,7 @@ fn cli_accepts_valid_commit_text() {
 #[test]
 fn cli_rejects_invalid_type_text() {
     let file = write_temp("update: stuff");
-    Command::cargo_bin("conventional-commit-checker")
+    Command::cargo_bin("cc-check")
         .unwrap()
         .arg(file.path())
         .assert()
@@ -34,7 +34,7 @@ fn cli_rejects_invalid_type_text() {
 #[test]
 fn cli_json_ok() {
     let file = write_temp("fix: correct bug");
-    Command::cargo_bin("conventional-commit-checker")
+    Command::cargo_bin("cc-check")
         .unwrap()
         .args(["--format", "json"])
         .arg(file.path())
@@ -46,7 +46,7 @@ fn cli_json_ok() {
 #[test]
 fn cli_json_error_contains_message() {
     let file = write_temp("wip: tmp");
-    Command::cargo_bin("conventional-commit-checker")
+    Command::cargo_bin("cc-check")
         .unwrap()
         .args(["--format", "json"])
         .arg(file.path())
@@ -58,7 +58,7 @@ fn cli_json_error_contains_message() {
 #[test]
 fn cli_allows_merge_like_by_default() {
     let file = write_temp("Merge branch 'feature/x'");
-    Command::cargo_bin("conventional-commit-checker")
+    Command::cargo_bin("cc-check")
         .unwrap()
         .arg(file.path())
         .assert()

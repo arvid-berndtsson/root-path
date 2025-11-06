@@ -4,7 +4,7 @@
  use std::fs;
  use std::path::PathBuf;
  
- use conv_commit_check::{first_meaningful_line, is_merge_like_header, validate_header, ValidationError};
+use cc_check::{first_meaningful_line, is_merge_like_header, validate_header, ValidationError};
  
  #[derive(Debug, Clone, Copy, PartialEq, Eq)]
  enum OutputFormat { Text, Json }
@@ -20,12 +20,12 @@
      }
  }
  
- #[derive(Debug, Parser)]
- #[command(
-     name = "conv-commit-check",
-     about = "Validate commit messages against Conventional Commits",
-     version
- )]
+#[derive(Debug, Parser)]
+#[command(
+    name = "cc-check",
+    about = "Validate commit messages against Conventional Commits",
+    version
+)]
  struct Cli {
      /// Path to the commit message file (as provided to commit-msg hook)
      #[arg(value_name = "COMMIT_MSG_FILE", required = false)]

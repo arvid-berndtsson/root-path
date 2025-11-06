@@ -1,11 +1,11 @@
- [package]
- name = "conv-commit-check"
+[package]
+name = "cc-check"
  version = "0.1.0"
  authors = ["Arvid Berndtsson <dev@arvid.tech>"]
  edition = "2021"
  description = "Conventional commit checker for use in pre-commit/commit-msg hooks"
- license = "MIT"
-repository = "https://github.com/arvid-berndtsson/root-path"
+license = "MIT"
+repository = "https://github.com/arvid-berndtsson/cc-check"
 readme = "README.md"
 keywords = ["conventional-commits", "git", "commit-msg", "pre-commit", "lint"]
 categories = ["development-tools", "command-line-utilities"]
@@ -21,9 +21,9 @@ categories = ["development-tools", "command-line-utilities"]
  [profile.release]
  lto = true
  codegen-units = 1
- opt-level = "z"
+opt-level = "z"
 [[bin]]
-name = "conventional-commit-checker"
+name = "cc-check"
 path = "src/main.rs"
 
 [dev-dependencies]

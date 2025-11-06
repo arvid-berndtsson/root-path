@@ -1,4 +1,4 @@
- # Conventional Commit Checker (Rust)
+# cc-check (Conventional Commit Checker in Rust)
 
  Validate commit messages against the Conventional Commits specification.
 
@@ -28,7 +28,7 @@
 - `--no-trailing-period=false` allow trailing period
 - `--format json` machine-readable output (`{"ok":true}` or `{ "ok": false, "error": "..." }`)
 
- ## Pre-commit integration
+## Pre-commit integration
 
  This repository includes a `.pre-commit-config.yaml` configured for the `commit-msg` stage using a local hook:
 
@@ -82,7 +82,7 @@ The workflow will build, test, dry-run, and then publish the crate.
 
  MIT
 
-# Conventional Commit Checker
+# cc-check
 
 A Rust-based tool to validate git commit messages against the [Conventional Commits](https://www.conventionalcommits.org/) specification. This tool hooks into git's commit-msg hook to automatically validate commit messages.
 
