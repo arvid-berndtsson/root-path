@@ -6,63 +6,147 @@ on:
       - 'v*.*.*'
 
 jobs:
-  build-and-release:
-    name: Build and Release
+  build-linux-x86_64:
+    name: Build Linux (x86_64)
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      id-token: write
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt, clippy
 
-      - name: Set version from tag
-        id: version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-
-      - name: Build for Linux (x86_64)
+      - name: Build
         run: cargo build --release --target x86_64-unknown-linux-gnu
 
-      - name: Build for Linux (ARM64)
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cc-check-linux-x86_64
+          path: target/x86_64-unknown-linux-gnu/release/cc-check
+
+  build-linux-arm64:
+    name: Build Linux (ARM64)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cross-compilation toolchain
         run: |
           rustup target add aarch64-unknown-linux-gnu
-          cargo build --release --target aarch64-unknown-linux-gnu
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+          mkdir -p .cargo
+          echo '[target.aarch64-unknown-linux-gnu]' >> .cargo/config.toml
+          echo 'linker = "aarch64-linux-gnu-gcc"' >> .cargo/config.toml
 
-      - name: Build for macOS (x86_64)
-        run: |
-          rustup target add x86_64-apple-darwin
-          cargo build --release --target x86_64-apple-darwin
+      - name: Build
+        run: cargo build --release --target aarch64-unknown-linux-gnu
 
-      - name: Build for macOS (ARM64)
-        run: |
-          rustup target add aarch64-apple-darwin
-          cargo build --release --target aarch64-apple-darwin
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cc-check-linux-arm64
+          path: target/aarch64-unknown-linux-gnu/release/cc-check
 
-      - name: Build for Windows (x86_64)
-        run: |
-          rustup target add x86_64-pc-windows-msvc
-          cargo build --release --target x86_64-pc-windows-msvc
+  build-macos-x86_64:
+    name: Build macOS (x86_64)
+    runs-on: macos-14
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Create release artifacts
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build
+        run: cargo build --release --target x86_64-apple-darwin
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cc-check-macos-x86_64
+          path: target/x86_64-apple-darwin/release/cc-check
+
+  build-macos-arm64:
+    name: Build macOS (ARM64)
+    runs-on: macos-14
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build
+        run: cargo build --release --target aarch64-apple-darwin
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cc-check-macos-arm64
+          path: target/aarch64-apple-darwin/release/cc-check
+
+  build-windows-x86_64:
+    name: Build Windows (x86_64)
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build
+        run: cargo build --release --target x86_64-pc-windows-msvc
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cc-check-windows-x86_64
+          path: target/x86_64-pc-windows-msvc/release/cc-check.exe
+
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: [build-linux-x86_64, build-linux-arm64, build-macos-x86_64, build-macos-arm64, build-windows-x86_64]
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Prepare release artifacts
         run: |
           mkdir -p release
-          cp target/x86_64-unknown-linux-gnu/release/cc-check release/cc-check-linux-x86_64
-          cp target/aarch64-unknown-linux-gnu/release/cc-check release/cc-check-linux-arm64
-          cp target/x86_64-apple-darwin/release/cc-check release/cc-check-macos-x86_64
-          cp target/aarch64-apple-darwin/release/cc-check release/cc-check-macos-arm64
-          cp target/x86_64-pc-windows-msvc/release/cc-check.exe release/cc-check-windows-x86_64.exe
+          
+          # Copy and rename binaries
+          cp artifacts/cc-check-linux-x86_64/cc-check release/cc-check-linux-x86_64
+          cp artifacts/cc-check-linux-arm64/cc-check release/cc-check-linux-arm64
+          cp artifacts/cc-check-macos-x86_64/cc-check release/cc-check-macos-x86_64
+          cp artifacts/cc-check-macos-arm64/cc-check release/cc-check-macos-arm64
+          cp artifacts/cc-check-windows-x86_64/cc-check.exe release/cc-check-windows-x86_64.exe
+          
+          # Make binaries executable
+          chmod +x release/cc-check-linux-*
+          chmod +x release/cc-check-macos-*
           
           # Create tarballs
           tar czf release/cc-check-linux-x86_64.tar.gz -C release cc-check-linux-x86_64
           tar czf release/cc-check-linux-arm64.tar.gz -C release cc-check-linux-arm64
           tar czf release/cc-check-macos-x86_64.tar.gz -C release cc-check-macos-x86_64
           tar czf release/cc-check-macos-arm64.tar.gz -C release cc-check-macos-arm64
+          
+          # Create zip for Windows
           zip -j release/cc-check-windows-x86_64.zip release/cc-check-windows-x86_64.exe
 
       - name: Create GitHub Release
@@ -76,7 +160,7 @@ jobs:
   publish-crates-io:
     name: Publish to crates.io
     runs-on: ubuntu-latest
-    needs: build-and-release
+    needs: create-release
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -90,7 +174,7 @@ jobs:
   publish-npm:
     name: Publish to npm
     runs-on: ubuntu-latest
-    needs: build-and-release
+    needs: create-release
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -137,7 +221,7 @@ jobs:
                   tar -xzf "/tmp/${filename}" -C bin/ && mv bin/cc-check-linux-x86_64 bin/cc-check-linux-x64 || true
                   ;;
                 *linux-arm64.tar.gz)
-                  tar -xzf "/tmp/${filename}" -C bin/ && mv bin/cc-check-linux-arm64 bin/cc-check-linux-arm64 || true
+                  tar -xzf "/tmp/${filename}" -C bin/ || true
                   ;;
                 *macos-x86_64.tar.gz)
                   tar -xzf "/tmp/${filename}" -C bin/ && mv bin/cc-check-macos-x86_64 bin/cc-check-darwin-x64 || true
@@ -166,7 +250,7 @@ jobs:
   publish-pypi:
     name: Publish to PyPI
     runs-on: ubuntu-latest
-    needs: build-and-release
+    needs: create-release
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -203,8 +287,7 @@ jobs:
               # Extract and organize binaries
               case "$filename" in
                 *linux-x86_64.tar.gz)
-                  tar -xzf "/tmp/${filename}" -C cc_check/binaries/ && \
-                  mv cc_check/binaries/cc-check-linux-x86_64 cc_check/binaries/cc-check-linux-x86_64 || true
+                  tar -xzf "/tmp/${filename}" -C cc_check/binaries/
                   ;;
                 *linux-arm64.tar.gz)
                   tar -xzf "/tmp/${filename}" -C cc_check/binaries/ && \
@@ -232,15 +315,21 @@ jobs:
         run: |
           mkdir -p cc_check
           TAG="${{ steps.tag.outputs.TAG }}"
-          cat > cc_check/__init__.py << EOF
-          """cc-check: Cross-platform conventional commit checker."""
+          export TAG
+          python3 << 'PYTHON_SCRIPT'
+          import os
+          import textwrap
+          
+          tag = os.environ['TAG']
+          
+          init_content = textwrap.dedent(f'''"""cc-check: Cross-platform conventional commit checker."""
           import os
           import sys
           import platform
           import subprocess
           from pathlib import Path
           
-          __version__ = "${TAG}"
+          __version__ = "{tag}"
           
           def _get_binary_path():
               """Get the path to the platform-specific binary."""
@@ -258,17 +347,17 @@ jobs:
                   system = 'win32'
                   arch = 'x86_64'
               else:
-                  raise OSError(f"Unsupported platform: {system}")
+                  raise OSError(f"Unsupported platform: {{system}}")
               
               binary_dir = Path(__file__).parent / 'binaries'
               if system == 'win32':
-                  binary_name = f'cc-check-{system}-{arch}.exe'
+                  binary_name = f'cc-check-{{system}}-{{arch}}.exe'
               else:
-                  binary_name = f'cc-check-{system}-{arch}'
+                  binary_name = f'cc-check-{{system}}-{{arch}}'
               
               binary_path = binary_dir / binary_name
               if not binary_path.exists():
-                  raise FileNotFoundError(f"Binary not found: {binary_path}")
+                  raise FileNotFoundError(f"Binary not found: {{binary_path}}")
               
               return binary_path
           
@@ -283,17 +372,16 @@ jobs:
               # Add kwargs as flags
               for key, value in kwargs.items():
                   if value is True:
-                      cmd.append(f'--{key.replace("_", "-")}')
+                      cmd.append(f'--{{key.replace("_", "-")}}')
                   elif value is not None:
-                      cmd.append(f'--{key.replace("_", "-")}')
+                      cmd.append(f'--{{key.replace("_", "-")}}')
                       cmd.append(str(value))
               
               result = subprocess.run(cmd, capture_output=True, text=True)
               return result.returncode == 0, result.stdout, result.stderr
-          EOF
+          ''')
           
-          cat > cc_check/__main__.py << 'EOF'
-          """Entry point for python -m cc_check."""
+          main_content = textwrap.dedent('''"""Entry point for python -m cc_check."""
           import sys
           from cc_check import check
           
@@ -308,7 +396,13 @@ jobs:
           
           if __name__ == '__main__':
               main()
-          EOF
+          ''')
+          
+          with open('cc_check/__init__.py', 'w') as f:
+              f.write(init_content)
+          with open('cc_check/__main__.py', 'w') as f:
+              f.write(main_content)
+          PYTHON_SCRIPT
 
       - name: Install build tools
         run: |
