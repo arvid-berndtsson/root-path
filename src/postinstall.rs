@@ -10,7 +10,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ("windows", _) => ("win32", "cc-check-win32-x64.exe"),
         ("macos", "aarch64" | "arm64") => ("darwin", "cc-check-darwin-arm64"),
         ("macos", _) => ("darwin", "cc-check-darwin-x64"),
-        (_, "aarch64" | "arm64") => ("linux", "cc-check-linux-arm64"),
+        (_, "aarch64" | "arm64") => ("linux", "cc-check-linux-aarch64"),
         _ => ("linux", "cc-check-linux-x64"),
     };
 

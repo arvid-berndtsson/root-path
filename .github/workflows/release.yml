@@ -221,7 +221,7 @@ jobs:
                   tar -xzf "/tmp/${filename}" -C bin/ && mv bin/cc-check-linux-x86_64 bin/cc-check-linux-x64 || true
                   ;;
                 *linux-arm64.tar.gz)
-                  tar -xzf "/tmp/${filename}" -C bin/ || true
+                  tar -xzf "/tmp/${filename}" -C bin/ && mv bin/cc-check-linux-arm64 bin/cc-check-linux-aarch64 || true
                   ;;
                 *macos-x86_64.tar.gz)
                   tar -xzf "/tmp/${filename}" -C bin/ && mv bin/cc-check-macos-x86_64 bin/cc-check-darwin-x64 || true
