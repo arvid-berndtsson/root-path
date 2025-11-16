@@ -85,6 +85,9 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Install target
+        run: rustup target add aarch64-apple-darwin
+
       - name: Build
         run: cargo build --release --target aarch64-apple-darwin
 
