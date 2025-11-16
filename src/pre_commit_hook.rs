@@ -25,7 +25,10 @@ fn main() -> Result<()> {
         cmd.stdout(Stdio::inherit());
         cmd.stderr(Stdio::inherit());
         let status = cmd.status()?;
-        std::process::exit(status.code().unwrap_or(1));
+        // Process was terminated by a signal (Unix)
+        // Use 130 (128 + SIGINT) as a reasonable default for signal termination
+        let exit_code = status.code().unwrap_or(130);
+        std::process::exit(exit_code);
     }
 
     // Try debug binary
@@ -37,7 +40,10 @@ fn main() -> Result<()> {
         cmd.stdout(Stdio::inherit());
         cmd.stderr(Stdio::inherit());
         let status = cmd.status()?;
-        std::process::exit(status.code().unwrap_or(1));
+        // Process was terminated by a signal (Unix)
+        // Use 130 (128 + SIGINT) as a reasonable default for signal termination
+        let exit_code = status.code().unwrap_or(130);
+        std::process::exit(exit_code);
     }
 
     // Fall back to cargo run
@@ -61,7 +67,10 @@ fn main() -> Result<()> {
         cmd.stdout(Stdio::inherit());
         cmd.stderr(Stdio::inherit());
         let status = cmd.status()?;
-        std::process::exit(status.code().unwrap_or(1));
+        // Process was terminated by a signal (Unix)
+        // Use 130 (128 + SIGINT) as a reasonable default for signal termination
+        let exit_code = status.code().unwrap_or(130);
+        std::process::exit(exit_code);
     }
 
     bail!(

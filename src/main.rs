@@ -89,6 +89,39 @@ struct JsonResult<'a> {
     error: Option<&'a str>,
 }
 
+/// Options for checking commit messages
+struct CheckOptions {
+    /// Path to the commit message file
+    commit_msg_file: Option<PathBuf>,
+    /// Additional commit types to allow (comma-separated)
+    extra_types: Option<String>,
+    /// Maximum subject length (0 to disable)
+    max_subject: usize,
+    /// Disallow trailing period in subject
+    no_trailing_period: bool,
+    /// Ignore comment lines (starting with '#') in commit message
+    ignore_comments: bool,
+    /// Allow merge-like messages (e.g., 'Merge ...' or 'Revert ...') to pass
+    allow_merge_commits: bool,
+    /// Output format: text or json
+    format: OutputFormat,
+}
+
+impl CheckOptions {
+    /// Create default options for backward compatibility
+    fn default_with_file(commit_msg_file: Option<PathBuf>) -> Self {
+        Self {
+            commit_msg_file,
+            extra_types: None,
+            max_subject: 72,
+            no_trailing_period: true,
+            ignore_comments: true,
+            allow_merge_commits: true,
+            format: OutputFormat::Text,
+        }
+    }
+}
+
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
@@ -102,7 +135,7 @@ fn main() -> Result<()> {
             ignore_comments,
             allow_merge_commits,
             format,
-        }) => check_commit(
+        }) => check_commit(CheckOptions {
             commit_msg_file,
             extra_types,
             max_subject,
@@ -110,18 +143,10 @@ fn main() -> Result<()> {
             ignore_comments,
             allow_merge_commits,
             format,
-        ),
+        }),
         None => {
             // Default behavior: check commit message (backward compatibility)
-            check_commit(
-                cli.commit_msg_file,
-                None,
-                72,
-                true,
-                true,
-                true,
-                OutputFormat::Text,
-            )
+            check_commit(CheckOptions::default_with_file(cli.commit_msg_file))
         }
     }
 }
@@ -284,22 +309,14 @@ exec {} check "$1"
     ))
 }
 
-fn check_commit(
-    commit_msg_file: Option<PathBuf>,
-    extra_types: Option<String>,
-    max_subject: usize,
-    no_trailing_period: bool,
-    ignore_comments: bool,
-    allow_merge_commits: bool,
-    format: OutputFormat,
-) -> Result<()> {
+fn check_commit(options: CheckOptions) -> Result<()> {
     let allowed_types_default = [
         "feat", "fix", "chore", "docs", "style", "refactor", "perf", "test", "build", "ci",
         "revert",
     ];
 
     let mut allowed_types = allowed_types_default.map(String::from).to_vec();
-    if let Some(extra) = &extra_types {
+    if let Some(extra) = &options.extra_types {
         for t in extra.split(',') {
             let t = t.trim();
             if !t.is_empty() && !allowed_types.iter().any(|x| x == t) {
@@ -308,8 +325,8 @@ fn check_commit(
         }
     }
 
-    let message = if let Some(path) = commit_msg_file {
-        fs::read_to_string(&path)
+    let message = if let Some(path) = &options.commit_msg_file {
+        fs::read_to_string(path)
             .with_context(|| format!("failed to read commit message file: {}", path.display()))?
     } else if let Ok(contents) = fs::read_to_string(".git/COMMIT_EDITMSG") {
         contents
@@ -317,18 +334,23 @@ fn check_commit(
         bail!("no commit message file provided");
     };
 
-    let header_opt = first_meaningful_line(&message, ignore_comments);
+    let header_opt = first_meaningful_line(&message, options.ignore_comments);
     let header = match header_opt {
         Some(h) => h,
-        None => return exit_with(format, Err(ValidationError::Empty)),
+        None => return exit_with(options.format, Err(ValidationError::Empty)),
     };
 
-    if allow_merge_commits && is_merge_like_header(&header) {
-        return exit_with(format, Ok(()));
+    if options.allow_merge_commits && is_merge_like_header(&header) {
+        return exit_with(options.format, Ok(()));
     }
 
-    let res = validate_header(&header, &allowed_types, max_subject, no_trailing_period);
-    exit_with(format, res)
+    let res = validate_header(
+        &header,
+        &allowed_types,
+        options.max_subject,
+        options.no_trailing_period,
+    );
+    exit_with(options.format, res)
 }
 
 fn exit_with(format: OutputFormat, res: std::result::Result<(), ValidationError>) -> Result<()> {

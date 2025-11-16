@@ -63,6 +63,9 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Install target
+        run: rustup target add x86_64-apple-darwin
+
       - name: Build
         run: cargo build --release --target x86_64-apple-darwin
 
@@ -100,6 +103,9 @@ jobs:
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Windows target
+        run: rustup target add x86_64-pc-windows-msvc
 
       - name: Build
         run: cargo build --release --target x86_64-pc-windows-msvc
@@ -371,10 +377,11 @@ jobs:
               
               # Add kwargs as flags
               for key, value in kwargs.items():
+                  flag_name = key.replace("_", "-")
                   if value is True:
-                      cmd.append(f'--{{key.replace("_", "-")}}')
+                      cmd.append(f'--{{flag_name}}')
                   elif value is not None:
-                      cmd.append(f'--{{key.replace("_", "-")}}')
+                      cmd.append(f'--{{flag_name}}')
                       cmd.append(str(value))
               
               result = subprocess.run(cmd, capture_output=True, text=True)
