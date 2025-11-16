@@ -113,46 +113,181 @@ mod tests {
         .collect()
     }
 
-    #[test]
-    fn parses_with_scope_and_bang() {
-        let header = "feat(api)!: break things";
-        assert!(validate_header(header, &allowed(), 72, true).is_ok());
+    mod validation {
+        use super::*;
+
+        #[test]
+        fn valid_minimal() {
+            let header = "feat: add x";
+            assert!(validate_header(header, &allowed(), 72, true).is_ok());
+        }
+
+        #[test]
+        fn invalid_type() {
+            let header = "update: stuff";
+            assert!(validate_header(header, &allowed(), 72, true).is_err());
+        }
+
+        #[test]
+        fn validates_with_scope() {
+            let header = "feat(api): add endpoint";
+            assert!(validate_header(header, &allowed(), 72, true).is_ok());
+        }
+
+        #[test]
+        fn validates_with_breaking_change_bang() {
+            let header = "feat!: breaking change";
+            assert!(validate_header(header, &allowed(), 72, true).is_ok());
+        }
+
+        #[test]
+        fn validates_with_scope_and_bang() {
+            let header = "feat(api)!: breaking api change";
+            assert!(validate_header(header, &allowed(), 72, true).is_ok());
+        }
+
+        #[test]
+        fn rejects_empty_subject() {
+            let header = "feat: ";
+            assert!(validate_header(header, &allowed(), 72, true).is_err());
+        }
+
+        #[test]
+        fn rejects_missing_colon() {
+            let header = "feat add x";
+            assert!(validate_header(header, &allowed(), 72, true).is_err());
+        }
+
+        #[test]
+        fn rejects_invalid_scope_format() {
+            let header = "feat[api]: add endpoint";
+            assert!(validate_header(header, &allowed(), 72, true).is_err());
+        }
+
+        #[test]
+        fn parses_with_scope_and_bang() {
+            let header = "feat(api)!: x";
+            assert!(validate_header(header, &allowed(), 72, true).is_ok());
+        }
+
+        #[test]
+        fn rejects_trailing_period_when_enforced() {
+            let header = "feat: x.";
+            let err = validate_header(header, &allowed(), 72, true).unwrap_err();
+            assert!(matches!(err, ValidationError::TrailingPeriod));
+        }
+
+        #[test]
+        fn allows_trailing_period_when_disabled() {
+            let header = "feat: x.";
+            assert!(validate_header(header, &allowed(), 72, false).is_ok());
+        }
+
+        #[test]
+        fn enforces_subject_length() {
+            let long_subject = "a".repeat(80);
+            let header = format!("feat: {}", long_subject);
+            let err = validate_header(&header, &allowed(), 72, true).unwrap_err();
+            assert!(matches!(err, ValidationError::SubjectTooLong(72, 80)));
+        }
     }
 
-    #[test]
-    fn rejects_trailing_period_when_enforced() {
-        let header = "feat: add x.";
-        let err = validate_header(header, &allowed(), 72, true).unwrap_err();
-        assert!(matches!(err, ValidationError::TrailingPeriod));
+    mod first_line {
+        use super::*;
+
+        #[test]
+        fn first_meaningful_line_skips_comments_and_blanks() {
+            let msg = "\n# comment\n\n  feat: ok";
+            assert_eq!(
+                first_meaningful_line(msg, true).as_deref(),
+                Some("feat: ok")
+            );
+        }
     }
 
-    #[test]
-    fn allows_trailing_period_when_disabled() {
-        let header = "feat: add x.";
-        assert!(validate_header(header, &allowed(), 72, false).is_ok());
+    mod merge_detection {
+        use super::*;
+
+        #[test]
+        fn merge_like_headers_detected() {
+            assert!(is_merge_like_header("Merge branch 'x'"));
+            assert!(is_merge_like_header("Revert y"));
+            assert!(!is_merge_like_header("feat: x"));
+        }
     }
 
-    #[test]
-    fn enforces_subject_length() {
-        let long_subject = "a".repeat(80);
-        let header = format!("feat: {}", long_subject);
-        let err = validate_header(&header, &allowed(), 72, true).unwrap_err();
-        assert!(matches!(err, ValidationError::SubjectTooLong(72, 80)));
-    }
+    mod repo_root {
+        use super::*;
 
-    #[test]
-    fn merge_like_headers_detected() {
-        assert!(is_merge_like_header("Merge branch 'x'"));
-        assert!(is_merge_like_header("Revert y"));
-        assert!(!is_merge_like_header("feat: x"));
-    }
+        #[test]
+        fn find_repo_root_finds_cargo_toml() {
+            use tempfile::TempDir;
+            let original_dir = std::env::current_dir().unwrap();
+            let temp_dir = TempDir::new().unwrap();
+            let cargo_toml = temp_dir.path().join("Cargo.toml");
+            std::fs::write(&cargo_toml, "[package]\nname = \"test\"").unwrap();
 
-    #[test]
-    fn first_meaningful_line_skips_comments_and_blanks() {
-        let msg = "\n# comment\n\n  feat: ok";
-        assert_eq!(
-            first_meaningful_line(msg, true).as_deref(),
-            Some("feat: ok")
-        );
+            std::env::set_current_dir(temp_dir.path()).unwrap();
+            let root = find_repo_root().unwrap();
+            // Use canonicalize to handle symlink differences (e.g., /var vs /private/var on macOS)
+            let expected = std::fs::canonicalize(temp_dir.path()).unwrap();
+            let actual = std::fs::canonicalize(&root).unwrap();
+            assert_eq!(actual, expected);
+            std::env::set_current_dir(original_dir).unwrap();
+        }
+
+        #[test]
+        fn find_repo_root_finds_git_dir() {
+            use tempfile::TempDir;
+            let original_dir = std::env::current_dir().unwrap();
+            let temp_dir = TempDir::new().unwrap();
+            let git_dir = temp_dir.path().join(".git");
+            std::fs::create_dir(&git_dir).unwrap();
+
+            std::env::set_current_dir(temp_dir.path()).unwrap();
+            let root = find_repo_root().unwrap();
+            // Use canonicalize to handle symlink differences (e.g., /var vs /private/var on macOS)
+            let expected = std::fs::canonicalize(temp_dir.path()).unwrap();
+            let actual = std::fs::canonicalize(&root).unwrap();
+            assert_eq!(actual, expected);
+            std::env::set_current_dir(original_dir).unwrap();
+        }
+
+        #[test]
+        fn find_repo_root_finds_parent_with_cargo_toml() {
+            use tempfile::TempDir;
+            let original_dir = std::env::current_dir().unwrap();
+            let temp_dir = TempDir::new().unwrap();
+            let sub_dir = temp_dir.path().join("sub").join("dir");
+            std::fs::create_dir_all(&sub_dir).unwrap();
+            let cargo_toml = temp_dir.path().join("Cargo.toml");
+            std::fs::write(&cargo_toml, "[package]\nname = \"test\"").unwrap();
+
+            std::env::set_current_dir(&sub_dir).unwrap();
+            let root = find_repo_root().unwrap();
+            // Use canonicalize to handle symlink differences (e.g., /var vs /private/var on macOS)
+            let expected = std::fs::canonicalize(temp_dir.path()).unwrap();
+            let actual = std::fs::canonicalize(&root).unwrap();
+            assert_eq!(actual, expected);
+            std::env::set_current_dir(original_dir).unwrap();
+        }
+
+        #[test]
+        fn find_repo_root_fails_when_no_repo_found() {
+            use tempfile::TempDir;
+            let original_dir = std::env::current_dir().unwrap();
+            let temp_dir = TempDir::new().unwrap();
+            let sub_dir = temp_dir.path().join("sub").join("dir");
+            std::fs::create_dir_all(&sub_dir).unwrap();
+
+            std::env::set_current_dir(&sub_dir).unwrap();
+            let result = find_repo_root();
+            assert!(result.is_err());
+            assert!(result
+                .unwrap_err()
+                .to_string()
+                .contains("could not find repository root"));
+            std::env::set_current_dir(original_dir).unwrap();
+        }
     }
 }
