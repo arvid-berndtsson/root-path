@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "description": "Cross-platform conventional commit checker for git commit messages",
   "bin": {
-    "cc-check": "./bin/cc-check"
+    "cc-check": "./bin/cc-check",
+    "postinstall": "./bin/postinstall"
   },
   "files": [
     "bin",
