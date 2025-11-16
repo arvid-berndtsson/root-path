@@ -5,7 +5,9 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use cc_check::{first_meaningful_line, is_merge_like_header, validate_header, ValidationError};
+use cc_check::{
+    find_repo_root, first_meaningful_line, is_merge_like_header, validate_header, ValidationError,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum OutputFormat {
@@ -269,22 +271,6 @@ if errorlevel 1 (
 "#,
         binary_str
     ))
-}
-
-fn find_repo_root() -> Result<PathBuf> {
-    let current_dir = std::env::current_dir()?;
-    let mut dir = current_dir.as_path();
-
-    loop {
-        if dir.join("Cargo.toml").exists() || dir.join(".git").exists() {
-            return Ok(dir.to_path_buf());
-        }
-
-        match dir.parent() {
-            Some(parent) => dir = parent,
-            None => bail!("could not find repository root (no Cargo.toml or .git found)"),
-        }
-    }
 }
 
 fn check_commit(

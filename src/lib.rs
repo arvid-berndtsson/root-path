@@ -1,4 +1,6 @@
+use anyhow::{bail, Result};
 use regex::Regex;
+use std::path::PathBuf;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ValidationError {
@@ -78,6 +80,23 @@ pub fn validate_header(
     }
 
     Ok(())
+}
+
+/// Find the repository root by looking for Cargo.toml or .git directory
+pub fn find_repo_root() -> Result<PathBuf> {
+    let current_dir = std::env::current_dir()?;
+    let mut dir = current_dir.as_path();
+
+    loop {
+        if dir.join("Cargo.toml").exists() || dir.join(".git").exists() {
+            return Ok(dir.to_path_buf());
+        }
+
+        match dir.parent() {
+            Some(parent) => dir = parent,
+            None => bail!("could not find repository root (no Cargo.toml or .git found)"),
+        }
+    }
 }
 
 #[cfg(test)]

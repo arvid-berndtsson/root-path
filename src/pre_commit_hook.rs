@@ -1,24 +1,7 @@
 use anyhow::{bail, Result};
+use cc_check::find_repo_root;
 use std::env;
-use std::path::PathBuf;
 use std::process::{Command, Stdio};
-
-/// Find the repository root by looking for Cargo.toml or .git directory
-fn find_repo_root() -> Result<PathBuf> {
-    let current_dir = env::current_dir()?;
-    let mut dir = current_dir.as_path();
-
-    loop {
-        if dir.join("Cargo.toml").exists() || dir.join(".git").exists() {
-            return Ok(dir.to_path_buf());
-        }
-
-        match dir.parent() {
-            Some(parent) => dir = parent,
-            None => bail!("could not find repository root (no Cargo.toml or .git found)"),
-        }
-    }
-}
 
 fn main() -> Result<()> {
     let mut args: Vec<String> = env::args().skip(1).collect();
