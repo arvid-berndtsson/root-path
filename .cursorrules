@@ -47,8 +47,8 @@ Closes #123
   - `cargo clippy --all-targets --all-features -D warnings`
   - `cargo test --all --all-features`
 - If checks fail, prefer to fix and include in the same commit if small and directly related; otherwise, create follow-up commits with appropriate `fix:`/`chore:` types.
-- Validate commit message format with the local script when available:
-  - `bash scripts/conventional_commit_check.sh`
+- Validate commit message format with the local binary when available:
+  - `target/release/cc-check check` or `cargo run --release -- check`
 
 ### Branch Naming
 - Use: `<type>/<scope>-<short-desc>` (kebab-case short description)

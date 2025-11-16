@@ -1,4 +1,6 @@
 use assert_cmd::prelude::*;
+#[macro_use]
+extern crate assert_cmd;
 use predicates::prelude::*;
 use std::io::Write;
 use std::process::Command;
@@ -13,8 +15,7 @@ fn write_temp(contents: &str) -> NamedTempFile {
 #[test]
 fn cli_accepts_valid_commit_text() {
     let file = write_temp("feat: add thing\n\nbody");
-    Command::cargo_bin("cc-check")
-        .unwrap()
+    Command::new(cargo_bin!("cc-check"))
         .arg(file.path())
         .assert()
         .success();
@@ -23,8 +24,7 @@ fn cli_accepts_valid_commit_text() {
 #[test]
 fn cli_rejects_invalid_type_text() {
     let file = write_temp("update: stuff");
-    Command::cargo_bin("cc-check")
-        .unwrap()
+    Command::new(cargo_bin!("cc-check"))
         .arg(file.path())
         .assert()
         .failure()
@@ -34,8 +34,7 @@ fn cli_rejects_invalid_type_text() {
 #[test]
 fn cli_json_ok() {
     let file = write_temp("fix: correct bug");
-    Command::cargo_bin("cc-check")
-        .unwrap()
+    Command::new(cargo_bin!("cc-check"))
         .args(["check", "--format", "json"])
         .arg(file.path())
         .assert()
@@ -46,8 +45,7 @@ fn cli_json_ok() {
 #[test]
 fn cli_json_error_contains_message() {
     let file = write_temp("wip: tmp");
-    Command::cargo_bin("cc-check")
-        .unwrap()
+    Command::new(cargo_bin!("cc-check"))
         .args(["check", "--format", "json"])
         .arg(file.path())
         .assert()
@@ -60,8 +58,7 @@ fn cli_json_error_contains_message() {
 #[test]
 fn cli_allows_merge_like_by_default() {
     let file = write_temp("Merge branch 'feature/x'");
-    Command::cargo_bin("cc-check")
-        .unwrap()
+    Command::new(cargo_bin!("cc-check"))
         .arg(file.path())
         .assert()
         .success();
@@ -70,8 +67,7 @@ fn cli_allows_merge_like_by_default() {
 #[test]
 fn cli_rejects_trailing_period_by_default() {
     let file = write_temp("feat: add x.");
-    Command::cargo_bin("cc-check")
-        .unwrap()
+    Command::new(cargo_bin!("cc-check"))
         .arg(file.path())
         .assert()
         .failure();
@@ -80,8 +76,7 @@ fn cli_rejects_trailing_period_by_default() {
 #[test]
 fn pre_commit_hook_accepts_valid_commit() {
     let file = write_temp("feat: add feature");
-    Command::cargo_bin("pre-commit-hook")
-        .unwrap()
+    Command::new(cargo_bin!("pre-commit-hook"))
         .arg(file.path())
         .assert()
         .success();
@@ -90,8 +85,7 @@ fn pre_commit_hook_accepts_valid_commit() {
 #[test]
 fn pre_commit_hook_rejects_invalid_commit() {
     let file = write_temp("invalid commit message");
-    Command::cargo_bin("pre-commit-hook")
-        .unwrap()
+    Command::new(cargo_bin!("pre-commit-hook"))
         .arg(file.path())
         .assert()
         .failure()
@@ -100,8 +94,7 @@ fn pre_commit_hook_rejects_invalid_commit() {
 
 #[test]
 fn pre_commit_hook_handles_nonexistent_file() {
-    Command::cargo_bin("pre-commit-hook")
-        .unwrap()
+    Command::new(cargo_bin!("pre-commit-hook"))
         .arg("/nonexistent/path/to/commit/msg")
         .assert()
         .failure()
@@ -112,8 +105,7 @@ fn pre_commit_hook_handles_nonexistent_file() {
 
 #[test]
 fn install_command_shows_help() {
-    Command::cargo_bin("cc-check")
-        .unwrap()
+    Command::new(cargo_bin!("cc-check"))
         .args(["install", "--help"])
         .assert()
         .success()
