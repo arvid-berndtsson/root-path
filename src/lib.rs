@@ -1,77 +1,84 @@
- use regex::Regex;
+use regex::Regex;
 
- #[derive(Debug, thiserror::Error)]
- pub enum ValidationError {
-     #[error("empty commit message")] 
-     Empty,
-     #[error("first line (header) missing")] 
-     MissingHeader,
-     #[error("header must match <type>(<scope>)?: <subject>")]
-     BadHeader,
-     #[error("type '{0}' is not allowed")]
-     DisallowedType(String),
-     #[error("subject must be non-empty")]
-     EmptySubject,
-     #[error("subject exceeds {0} characters ({1})")]
-     SubjectTooLong(usize, usize),
-     #[error("subject must not end with a period")]
-     TrailingPeriod,
- }
+#[derive(Debug, thiserror::Error)]
+pub enum ValidationError {
+    #[error("empty commit message")]
+    Empty,
+    #[error("first line (header) missing")]
+    MissingHeader,
+    #[error("header must match <type>(<scope>)?: <subject>")]
+    BadHeader,
+    #[error("type '{0}' is not allowed")]
+    DisallowedType(String),
+    #[error("subject must be non-empty")]
+    EmptySubject,
+    #[error("subject exceeds {0} characters ({1})")]
+    SubjectTooLong(usize, usize),
+    #[error("subject must not end with a period")]
+    TrailingPeriod,
+}
 
- /// Extract the first meaningful line from a commit message, skipping comment lines and empties.
- pub fn first_meaningful_line(message: &str, ignore_comments: bool) -> Option<String> {
-     for line in message.lines() {
-         let trimmed = line.trim();
-         if trimmed.is_empty() {
-             continue;
-         }
-         if ignore_comments && trimmed.starts_with('#') {
-             continue;
-         }
-         return Some(trimmed.to_string());
-     }
-     None
- }
+/// Extract the first meaningful line from a commit message, skipping comment lines and empties.
+pub fn first_meaningful_line(message: &str, ignore_comments: bool) -> Option<String> {
+    for line in message.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        if ignore_comments && trimmed.starts_with('#') {
+            continue;
+        }
+        return Some(trimmed.to_string());
+    }
+    None
+}
 
- /// Return true if the message is a merge commit header and should be optionally allowed.
- pub fn is_merge_like_header(line: &str) -> bool {
-     line.starts_with("Merge ") || line.starts_with("Revert ")
- }
+/// Return true if the message is a merge commit header and should be optionally allowed.
+pub fn is_merge_like_header(line: &str) -> bool {
+    line.starts_with("Merge ") || line.starts_with("Revert ")
+}
 
- pub fn validate_header(
-     header_line: &str,
-     allowed_types: &[String],
-     max_subject_len: usize,
-     no_trailing_period: bool,
- ) -> Result<(), ValidationError> {
-     let header_re = Regex::new(r"^(?P<type>[a-z]+)(?P<scope>\([^)]+\))?(?P<bang>!)?: (?P<subject>.+)$")
-         .expect("valid regex");
+pub fn validate_header(
+    header_line: &str,
+    allowed_types: &[String],
+    max_subject_len: usize,
+    no_trailing_period: bool,
+) -> Result<(), ValidationError> {
+    let header_re =
+        Regex::new(r"^(?P<type>[a-z]+)(?P<scope>\([^)]+\))?(?P<bang>!)?: (?P<subject>.+)$")
+            .expect("valid regex");
 
-     let captures = header_re.captures(header_line).ok_or(ValidationError::BadHeader)?;
-     let commit_type = captures.name("type").map(|m| m.as_str()).unwrap_or("");
-     let subject = captures.name("subject").map(|m| m.as_str()).unwrap_or("").trim();
+    let captures = header_re
+        .captures(header_line)
+        .ok_or(ValidationError::BadHeader)?;
+    let commit_type = captures.name("type").map(|m| m.as_str()).unwrap_or("");
+    let subject = captures
+        .name("subject")
+        .map(|m| m.as_str())
+        .unwrap_or("")
+        .trim();
 
-     if !allowed_types.iter().any(|t| t == commit_type) {
-         return Err(ValidationError::DisallowedType(commit_type.to_string()));
-     }
+    if !allowed_types.iter().any(|t| t == commit_type) {
+        return Err(ValidationError::DisallowedType(commit_type.to_string()));
+    }
 
-     if subject.is_empty() {
-         return Err(ValidationError::EmptySubject);
-     }
+    if subject.is_empty() {
+        return Err(ValidationError::EmptySubject);
+    }
 
-     if max_subject_len > 0 && subject.chars().count() > max_subject_len {
-         return Err(ValidationError::SubjectTooLong(
-             max_subject_len,
-             subject.chars().count(),
-         ));
-     }
+    if max_subject_len > 0 && subject.chars().count() > max_subject_len {
+        return Err(ValidationError::SubjectTooLong(
+            max_subject_len,
+            subject.chars().count(),
+        ));
+    }
 
-     if no_trailing_period && subject.ends_with('.') {
-         return Err(ValidationError::TrailingPeriod);
-     }
+    if no_trailing_period && subject.ends_with('.') {
+        return Err(ValidationError::TrailingPeriod);
+    }
 
-     Ok(())
- }
+    Ok(())
+}
 
 #[cfg(test)]
 mod tests {
@@ -79,8 +86,8 @@ mod tests {
 
     fn allowed() -> Vec<String> {
         vec![
-            "feat", "fix", "chore", "docs", "style", "refactor", "perf", "test", "build",
-            "ci", "revert",
+            "feat", "fix", "chore", "docs", "style", "refactor", "perf", "test", "build", "ci",
+            "revert",
         ]
         .into_iter()
         .map(String::from)
@@ -124,7 +131,9 @@ mod tests {
     #[test]
     fn first_meaningful_line_skips_comments_and_blanks() {
         let msg = "\n# comment\n\n  feat: ok";
-        assert_eq!(first_meaningful_line(msg, true).as_deref(), Some("feat: ok"));
+        assert_eq!(
+            first_meaningful_line(msg, true).as_deref(),
+            Some("feat: ok")
+        );
     }
 }
-

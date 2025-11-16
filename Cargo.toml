@@ -26,6 +26,10 @@ opt-level = "z"
 name = "cc-check"
 path = "src/main.rs"
 
+[[bin]]
+name = "pre-commit-hook"
+path = "src/pre_commit_hook.rs"
+
 [dev-dependencies]
 assert_cmd = "2.0"
 predicates = "3.1"

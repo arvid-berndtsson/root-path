@@ -1,9 +1,9 @@
- repos:
-   - repo: local
-     hooks:
+repos:
+  - repo: local
+    hooks:
       - id: conventional-commit-check
         name: Conventional Commit Checker (Rust)
-        entry: bash scripts/conventional_commit_check.sh
+        entry: target/release/pre-commit-hook
         language: system
         stages: [commit-msg]
         pass_filenames: true

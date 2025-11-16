@@ -1,87 +1,3 @@
-# cc-check (Conventional Commit Checker in Rust)
-
- Validate commit messages against the Conventional Commits specification.
-
- ## Usage
-
- Build and test locally:
-
- ```bash
- cargo run -- .git/COMMIT_EDITMSG
- ```
-
- The tool validates the first meaningful line (ignores `#` comments) with the format:
-
- ```
- <type>(<scope>)!: <subject>
- ```
-
- - Allowed types: feat, fix, chore, docs, style, refactor, perf, test, build, ci, revert
-- Subject default max length: 72 chars
-- Trailing period in subject is disallowed by default
-- Merge/Revert messages are allowed by default (`--no-allow-merge-commits` to disable)
-
- Flags:
-
- - `--extra-types "wip,release"` add custom allowed types
-- `--max-subject 0` disable subject length check
-- `--no-trailing-period=false` allow trailing period
-- `--format json` machine-readable output (`{"ok":true}` or `{ "ok": false, "error": "..." }`)
-
-## Pre-commit integration
-
- This repository includes a `.pre-commit-config.yaml` configured for the `commit-msg` stage using a local hook:
-
- ```yaml
- repos:
-   - repo: local
-     hooks:
-       - id: conventional-commit-check
-         name: Conventional Commit Checker (Rust)
-         entry: scripts/conventional_commit_check.sh
-         language: system
-         stages: [commit-msg]
-         pass_filenames: true
-         always_run: true
- ```
-
- Install and enable pre-commit in your repo:
-
- ```bash
- pre-commit install --hook-type commit-msg
- ```
-
- For faster runs, build the release binary once so the script uses it:
-
- ```bash
- cargo build --release
- ```
-
-## Publishing to crates.io
-
-This repository is configured to publish to crates.io using GitHub Actions:
-
-- Pull requests targeting `main` will run `cargo publish --dry-run` to validate the package.
-- Pushing a tag named `vX.Y.Z` to the repository will trigger a publish to crates.io.
-
-Setup steps:
-
-1. Create a crates.io API token in your account (`Settings` → `API Tokens`).
-2. Add the token to this repository secrets as `CARGO_REGISTRY_TOKEN` (`Settings` → `Secrets and variables` → `Actions`).
-3. Bump the version in `Cargo.toml` and create a tag:
-
-   ```bash
-   git commit -am "chore(release): vX.Y.Z"
-   git tag vX.Y.Z
-   git push origin main --tags
-   ```
-
-The workflow will build, test, dry-run, and then publish the crate.
-
- ## License
-
- MIT
-
 # cc-check
 
 A Rust-based tool to validate git commit messages against the [Conventional Commits](https://www.conventionalcommits.org/) specification. This tool hooks into git's commit-msg hook to automatically validate commit messages.
@@ -95,6 +11,7 @@ A Rust-based tool to validate git commit messages against the [Conventional Comm
 - ✅ Checks description length (warns if > 72 characters)
 - ✅ Integrates seamlessly with git pre-commit hooks
 - ✅ Can read from stdin or file (works with git hooks)
+- ✅ Configurable via command-line flags
 
 ## Installation
 
@@ -147,11 +64,19 @@ You can also use the checker directly:
 echo "feat: add feature" | cargo run --release
 
 # Or from a file
-cargo run --release -- --file COMMIT_EDITMSG
+cargo run --release -- .git/COMMIT_EDITMSG
 
 # Verbose output
 cargo run --release -- --verbose --file COMMIT_EDITMSG
 ```
+
+### Command-Line Flags
+
+- `--extra-types "wip,release"` - Add custom allowed types
+- `--max-subject 0` - Disable subject length check
+- `--no-trailing-period=false` - Allow trailing period
+- `--format json` - Machine-readable output (`{"ok":true}` or `{ "ok": false, "error": "..." }`)
+- `--no-allow-merge-commits` - Disable merge/revert message validation
 
 ### Commit Message Format
 
@@ -178,6 +103,11 @@ The tool validates the following format:
 - `chore`: Other changes that don't modify src or test files
 - `revert`: Reverts a previous commit
 
+**Validation Rules:**
+- Subject default max length: 72 chars
+- Trailing period in subject is disallowed by default
+- Merge/Revert messages are allowed by default
+
 **Examples:**
 
 ```bash
@@ -202,6 +132,37 @@ feat: add new API
 BREAKING CHANGE: The old API endpoint is deprecated
 ```
 
+## Pre-commit Integration
+
+This repository includes a `.pre-commit-config.yaml` configured for the `commit-msg` stage using a local hook:
+
+```yaml
+repos:
+  - repo: local
+    hooks:
+      - id: conventional-commit-check
+        name: Conventional Commit Checker (Rust)
+        entry: target/release/pre-commit-hook
+        language: system
+        stages: [commit-msg]
+        pass_filenames: true
+        always_run: true
+```
+
+Install and enable pre-commit in your repo:
+
+```bash
+pre-commit install --hook-type commit-msg
+```
+
+Build the release binary (required for the hook to work):
+
+```bash
+cargo build --release
+```
+
+The `pre-commit-hook` binary will automatically find and execute the main `cc-check` binary, falling back to `cargo run` if the binary isn't built yet.
+
 ## Building
 
 ```bash
@@ -214,6 +175,27 @@ cargo build --release
 # Run tests
 cargo test
 ```
+
+## Publishing to crates.io
+
+This repository is configured to publish to crates.io using GitHub Actions:
+
+- Pull requests targeting `main` will run `cargo publish --dry-run` to validate the package.
+- Pushing a tag named `vX.Y.Z` to the repository will trigger a publish to crates.io.
+
+Setup steps:
+
+1. Create a crates.io API token in your account (`Settings` → `API Tokens`).
+2. Add the token to this repository secrets as `CARGO_REGISTRY_TOKEN` (`Settings` → `Secrets and variables` → `Actions`).
+3. Bump the version in `Cargo.toml` and create a tag:
+
+   ```bash
+   git commit -am "chore(release): vX.Y.Z"
+   git tag vX.Y.Z
+   git push origin main --tags
+   ```
+
+The workflow will build, test, dry-run, and then publish the crate.
 
 ## Uninstallation
 
@@ -231,5 +213,4 @@ mv .git/hooks/commit-msg.backup .git/hooks/commit-msg
 
 ## License
 
-MIT OR Apache-2.0
-
+MIT
