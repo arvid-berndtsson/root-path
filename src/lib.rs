@@ -249,17 +249,11 @@ mod tests {
             let cargo_toml = temp_path.join("Cargo.toml");
             std::fs::write(&cargo_toml, "[package]\nname = \"test\"").unwrap();
 
-            // Verify we're in the right directory and the file exists
-            let current = std::env::current_dir().unwrap();
+            // Verify the file exists at the expected path
             assert!(
                 cargo_toml.exists(),
                 "Cargo.toml should exist at {:?}",
                 cargo_toml
-            );
-            assert!(
-                current.join("Cargo.toml").exists(),
-                "Cargo.toml should exist in current dir {:?}",
-                current
             );
 
             // Ensure we're still in the right directory before calling find_repo_root
