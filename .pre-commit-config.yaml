@@ -1,11 +1,43 @@
- repos:
-   - repo: local
-     hooks:
-       - id: conventional-commit-check
-         name: Conventional Commit Checker (Rust)
-         entry: scripts/conventional_commit_check.sh
-         language: system
-         stages: [commit-msg]
-         pass_filenames: true
-         always_run: true
+repos:
+  - repo: local
+    hooks:
+      # Check Rust formatting (matches CI check)
+      - id: rust-fmt-check
+        name: Rust Format Check
+        entry: cargo
+        args: ['fmt', '--all', '--', '--check']
+        language: system
+        types: [rust]
+        pass_filenames: false
+        always_run: true
+
+      # Run clippy linter (matches CI check)
+      - id: rust-clippy
+        name: Rust Clippy
+        entry: cargo
+        args: ['clippy', '--all-targets', '--all-features', '--', '-D', 'warnings']
+        language: system
+        types: [rust]
+        pass_filenames: false
+        always_run: true
+
+      # Run tests (matches CI check)
+      - id: rust-test
+        name: Rust Tests
+        entry: cargo
+        args: ['test', '--all-features']
+        language: system
+        types: [rust]
+        pass_filenames: false
+        always_run: true
+
+      # Validate commit message format
+      - id: conventional-commit-check
+        name: Conventional Commit Checker (Rust)
+        entry: cargo
+        args: ['run', '--quiet', '--release', '--bin', 'pre-commit-hook', '--']
+        language: system
+        stages: [commit-msg]
+        pass_filenames: true
+        always_run: true
 

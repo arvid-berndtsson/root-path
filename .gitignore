@@ -1,12 +1,11 @@
 # Rust
 /target/
 **/*.rs.bk
-*.pdb
 Cargo.lock
 
 # IDE
-.idea/
 .vscode/
+.idea/
 *.swp
 *.swo
 *~
@@ -15,42 +14,36 @@ Cargo.lock
 .DS_Store
 Thumbs.db
 
-# Build artifacts
-*.o
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
 *.so
-*.dylib
-*.dll
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# Backup files
-*.backup
-*.bak
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
 
-# Logs
-*.log
-
-# Env files
-.env
-.env.*
-
-# Coverage and profiling
-*.profraw
-*.profdata
-coverage/
-target/llvm-cov/
-
-# Direnv
-.direnv/
-.envrc
-
-# Rust analyzer
-rust-project.json
-
-# Cargo Home caches (if CARGO_HOME is set to project dir)
-# Keep `.cargo/config*` committed when present
-.cargo/bin/
-.cargo/registry/
-.cargo/git/
-
-# Project-local Cargo Home directory
-/.cargo-home/
-
+# Test artifacts
+*.tmp
+test_*.txt

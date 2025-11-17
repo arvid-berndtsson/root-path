@@ -1,10 +1,14 @@
- [package]
- name = "conv-commit-check"
- version = "0.1.0"
- authors = ["Arvid <you@example.com>"]
- edition = "2021"
- description = "Conventional commit checker for use in pre-commit/commit-msg hooks"
- license = "MIT"
+[package]
+name = "cc-check"
+version = "0.1.0"
+authors = ["Arvid Berndtsson <dev@arvid.tech>"]
+edition = "2021"
+description = "Cross-platform conventional commit checker for use in pre-commit/commit-msg hooks"
+license = "MIT"
+repository = "https://github.com/arvid-berndtsson/cc-check"
+readme = "README.md"
+keywords = ["conventional-commits", "git", "commit-msg", "pre-commit", "lint"]
+categories = ["development-tools", "command-line-utilities"]
 
  [dependencies]
  regex = "1.10"
@@ -17,10 +21,18 @@
  [profile.release]
  lto = true
  codegen-units = 1
- opt-level = "z"
+opt-level = "z"
 [[bin]]
-name = "conventional-commit-checker"
+name = "cc-check"
 path = "src/main.rs"
+
+[[bin]]
+name = "pre-commit-hook"
+path = "src/pre_commit_hook.rs"
+
+[[bin]]
+name = "postinstall"
+path = "src/postinstall.rs"
 
 [dev-dependencies]
 assert_cmd = "2.0"

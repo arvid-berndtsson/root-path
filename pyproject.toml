@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cc-check"
+version = "0.1.0"
+description = "Cross-platform conventional commit checker for git commit messages"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Arvid Berndtsson", email = "dev@arvid.tech"}
+]
+keywords = ["conventional-commits", "git", "commit-msg", "pre-commit", "lint"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Version Control :: Git",
+    "Topic :: Software Development :: Quality Assurance",
+]
+
+[project.scripts]
+cc-check = "cc_check.__main__:main"
+
+[project.urls]
+Homepage = "https://github.com/arvid-berndtsson/cc-check"
+Repository = "https://github.com/arvid-berndtsson/cc-check"
+Issues = "https://github.com/arvid-berndtsson/cc-check/issues"
+
+[tool.setuptools]
+packages = ["cc_check"]
+
+[tool.setuptools.package-data]
+cc_check = ["binaries/*"]
+

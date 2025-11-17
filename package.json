@@ -1,0 +1,45 @@
+{
+  "name": "cc-check",
+  "version": "0.1.0",
+  "description": "Cross-platform conventional commit checker for git commit messages",
+  "bin": {
+    "cc-check": "./bin/cc-check",
+    "postinstall": "./bin/postinstall"
+  },
+  "files": [
+    "bin",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "postinstall": "postinstall"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/arvid-berndtsson/cc-check.git"
+  },
+  "keywords": [
+    "conventional-commits",
+    "git",
+    "commit-msg",
+    "pre-commit",
+    "lint",
+    "commit",
+    "validator"
+  ],
+  "author": "Arvid Berndtsson <dev@arvid.tech>",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ]
+}
+
