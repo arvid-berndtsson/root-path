@@ -1,7 +1,8 @@
+use anyhow::{Context, Result};
 use std::env;
 use std::fs;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<()> {
     let platform = env::consts::OS;
     let arch = env::consts::ARCH;
 
@@ -15,10 +16,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     // Get the directory where this binary is located (should be in bin/)
-    let exe_path = env::current_exe()?;
+    let exe_path = env::current_exe().context("failed to determine current executable path")?;
     let bin_dir = exe_path
         .parent()
-        .ok_or("could not determine binary directory")?;
+        .ok_or_else(|| anyhow::anyhow!("could not determine binary directory"))?;
 
     let source_path = bin_dir.join(binary_name);
     let target_name = if platform == "windows" {
@@ -33,14 +34,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(()); // Don't fail, just warn
     }
 
-    fs::copy(&source_path, &target_path)?;
+    fs::copy(&source_path, &target_path).with_context(|| {
+        format!(
+            "failed to copy binary from {} to {}",
+            source_path.display(),
+            target_path.display()
+        )
+    })?;
 
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
-        let mut perms = fs::metadata(&target_path)?.permissions();
+        let mut perms = fs::metadata(&target_path)
+            .with_context(|| format!("failed to read metadata for {}", target_path.display()))?
+            .permissions();
         perms.set_mode(0o755);
-        fs::set_permissions(&target_path, perms)?;
+        fs::set_permissions(&target_path, perms)
+            .with_context(|| format!("failed to set permissions for {}", target_path.display()))?;
     }
 
     println!("✓ Installed cc-check for {} {}", os_name, arch);

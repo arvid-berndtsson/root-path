@@ -220,6 +220,7 @@ jobs:
           tag: ${{ steps.tag.outputs.TAG }}
           target-dir: bin
           naming-convention: npm
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Copy postinstall binary
         run: |
@@ -254,6 +255,7 @@ jobs:
           tag: ${{ steps.tag.outputs.TAG }}
           target-dir: cc_check/binaries
           naming-convention: pypi
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create Python package structure
         run: |
@@ -265,6 +267,8 @@ jobs:
           import textwrap
           
           tag = os.environ['TAG']
+          # Strip 'v' prefix from tag for Python version (e.g., 'v0.1.0' -> '0.1.0')
+          version = tag.removeprefix('v')
           
           init_content = textwrap.dedent(f'''"""cc-check: Cross-platform conventional commit checker."""
           import os
@@ -273,7 +277,7 @@ jobs:
           import subprocess
           from pathlib import Path
           
-          __version__ = "{tag}"
+          __version__ = "{version}"
           
           def _get_binary_path():
               """Get the path to the platform-specific binary."""

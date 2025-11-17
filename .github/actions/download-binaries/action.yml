@@ -11,6 +11,9 @@ inputs:
     description: 'Naming convention: npm or pypi'
     required: true
     default: 'npm'
+  token:
+    description: 'GitHub token for API authentication'
+    required: true
 runs:
   using: 'composite'
   steps:
@@ -25,17 +28,18 @@ runs:
         REPO: ${{ github.repository }}
         TARGET_DIR: ${{ inputs.target-dir }}
         NAMING: ${{ inputs.naming-convention }}
+        GITHUB_TOKEN: ${{ inputs.token }}
       run: |
         mkdir -p "$TARGET_DIR"
         
         # Download all platform binaries
-        curl -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+        curl -L -H "Authorization: token ${GITHUB_TOKEN}" \
           -H "Accept: application/json" \
           "https://api.github.com/repos/${REPO}/releases/tags/${TAG}" | \
           jq -r '.assets[] | select(.name | test("^cc-check-.*\\.(tar\\.gz|zip)$")) | .browser_download_url' | \
           while read url; do
             filename=$(basename "$url")
-            curl -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            curl -L -H "Authorization: token ${GITHUB_TOKEN}" \
               -H "Accept: application/octet-stream" \
               "$url" -o "/tmp/${filename}"
             
