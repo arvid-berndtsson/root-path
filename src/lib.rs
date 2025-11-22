@@ -235,19 +235,20 @@ mod tests {
         #[test]
         fn find_repo_root_finds_cargo_toml() {
             use tempfile::TempDir;
-            let original_dir = std::env::current_dir().unwrap();
+            let original_dir = std::env::current_dir().expect("should get current directory");
             let _guard = DirGuard {
                 original_dir: original_dir.clone(),
             };
-            let temp_dir = TempDir::new().unwrap();
+            let temp_dir = TempDir::new().expect("should create temp directory");
             let temp_path = temp_dir.path();
 
             // Ensure we're in the temp directory (may have been changed by other tests)
-            std::env::set_current_dir(temp_path).unwrap();
+            std::env::set_current_dir(temp_path).expect("should change to temp directory");
 
             // Write Cargo.toml after changing directory to ensure path consistency
             let cargo_toml = temp_path.join("Cargo.toml");
-            std::fs::write(&cargo_toml, "[package]\nname = \"test\"").unwrap();
+            std::fs::write(&cargo_toml, "[package]\nname = \"test\"")
+                .expect("should write Cargo.toml");
 
             // Verify the file exists at the expected path
             assert!(
@@ -258,12 +259,12 @@ mod tests {
 
             // Ensure we're still in the right directory before calling find_repo_root
             // (another test might have changed it)
-            std::env::set_current_dir(temp_path).unwrap();
-            let root = find_repo_root().unwrap();
+            std::env::set_current_dir(temp_path).expect("should change to temp directory");
+            let root = find_repo_root().expect("should find repo root");
 
             // Use canonicalize to handle symlink differences and Windows path representations
-            let expected = std::fs::canonicalize(temp_path).unwrap();
-            let actual = std::fs::canonicalize(&root).unwrap();
+            let expected = std::fs::canonicalize(temp_path).expect("should canonicalize temp path");
+            let actual = std::fs::canonicalize(&root).expect("should canonicalize root path");
             assert_eq!(
                 actual, expected,
                 "find_repo_root() returned {:?} but expected {:?}",
@@ -274,16 +275,16 @@ mod tests {
         #[test]
         fn find_repo_root_finds_git_dir() {
             use tempfile::TempDir;
-            let original_dir = std::env::current_dir().unwrap();
+            let original_dir = std::env::current_dir().expect("should get current directory");
             let _guard = DirGuard {
                 original_dir: original_dir.clone(),
             };
-            let temp_dir = TempDir::new().unwrap();
+            let temp_dir = TempDir::new().expect("should create temp directory");
             let git_dir = temp_dir.path().join(".git");
-            std::fs::create_dir(&git_dir).unwrap();
+            std::fs::create_dir(&git_dir).expect("should create .git directory");
 
             std::env::set_current_dir(temp_dir.path()).unwrap();
-            let root = find_repo_root().unwrap();
+            let root = find_repo_root().expect("should find repo root");
             // Use canonicalize to handle symlink differences (e.g., /var vs /private/var on macOS)
             let expected = std::fs::canonicalize(temp_dir.path()).unwrap();
             let actual = std::fs::canonicalize(&root).unwrap();
@@ -293,18 +294,19 @@ mod tests {
         #[test]
         fn find_repo_root_finds_parent_with_cargo_toml() {
             use tempfile::TempDir;
-            let original_dir = std::env::current_dir().unwrap();
+            let original_dir = std::env::current_dir().expect("should get current directory");
             let _guard = DirGuard {
                 original_dir: original_dir.clone(),
             };
-            let temp_dir = TempDir::new().unwrap();
+            let temp_dir = TempDir::new().expect("should create temp directory");
             let sub_dir = temp_dir.path().join("sub").join("dir");
-            std::fs::create_dir_all(&sub_dir).unwrap();
+            std::fs::create_dir_all(&sub_dir).expect("should create sub directory");
             let cargo_toml = temp_dir.path().join("Cargo.toml");
-            std::fs::write(&cargo_toml, "[package]\nname = \"test\"").unwrap();
+            std::fs::write(&cargo_toml, "[package]\nname = \"test\"")
+                .expect("should write Cargo.toml");
 
             std::env::set_current_dir(&sub_dir).unwrap();
-            let root = find_repo_root().unwrap();
+            let root = find_repo_root().expect("should find repo root");
             // Use canonicalize to handle symlink differences (e.g., /var vs /private/var on macOS)
             let expected = std::fs::canonicalize(temp_dir.path()).unwrap();
             let actual = std::fs::canonicalize(&root).unwrap();
@@ -314,11 +316,11 @@ mod tests {
         #[test]
         fn find_repo_root_fails_when_no_repo_found() {
             use tempfile::TempDir;
-            let original_dir = std::env::current_dir().unwrap();
+            let original_dir = std::env::current_dir().expect("should get current directory");
             let _guard = DirGuard {
                 original_dir: original_dir.clone(),
             };
-            let temp_dir = TempDir::new().unwrap();
+            let temp_dir = TempDir::new().expect("should create temp directory");
             let temp_path = temp_dir.path();
 
             // Check if the temp directory is inside a repository by checking from the original dir
@@ -327,7 +329,7 @@ mod tests {
             let original_repo_result = find_repo_root().ok();
 
             let sub_dir = temp_path.join("sub").join("dir");
-            std::fs::create_dir_all(&sub_dir).unwrap();
+            std::fs::create_dir_all(&sub_dir).expect("should create sub directory");
 
             std::env::set_current_dir(&sub_dir).unwrap();
             let result = find_repo_root();
@@ -336,9 +338,12 @@ mod tests {
             // doesn't allow us to test the failure case (temp dir is inside a repo)
             if let (Ok(found_root), Some(original_repo)) = (&result, original_repo_result.as_ref())
             {
-                let found_root = std::fs::canonicalize(found_root).unwrap();
-                let original_repo = std::fs::canonicalize(original_repo).unwrap();
-                let temp_path_canonical = std::fs::canonicalize(temp_path).unwrap();
+                let found_root =
+                    std::fs::canonicalize(found_root).expect("should canonicalize found root");
+                let original_repo = std::fs::canonicalize(original_repo)
+                    .expect("should canonicalize original repo");
+                let temp_path_canonical =
+                    std::fs::canonicalize(temp_path).expect("should canonicalize temp path");
 
                 // If the found root matches the original repo and temp is inside it,
                 // we can't test the failure case in this environment

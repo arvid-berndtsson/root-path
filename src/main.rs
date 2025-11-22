@@ -2,6 +2,7 @@ use anyhow::{bail, Context, Result};
 use clap::{Parser, Subcommand};
 use serde::Serialize;
 use std::fs;
+use std::io::{self, Read};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -328,6 +329,13 @@ fn check_commit(options: CheckOptions) -> Result<()> {
     let message = if let Some(path) = &options.commit_msg_file {
         fs::read_to_string(path)
             .with_context(|| format!("failed to read commit message file: {}", path.display()))?
+    } else if atty::isnt(atty::Stream::Stdin) {
+        // Read from stdin if it's not a TTY (i.e., piped input)
+        let mut buffer = String::new();
+        io::stdin()
+            .read_to_string(&mut buffer)
+            .context("failed to read from stdin")?;
+        buffer
     } else if let Ok(contents) = fs::read_to_string(".git/COMMIT_EDITMSG") {
         contents
     } else {
@@ -419,7 +427,7 @@ mod tests {
         #[test]
         fn escapes_paths() {
             let path = PathBuf::from("/usr/bin/cc-check");
-            let hook = create_unix_hook(&path).unwrap();
+            let hook = create_unix_hook(&path).expect("should create unix hook for valid path");
             assert!(hook.contains("exec '/usr/bin/cc-check'"));
             assert!(hook.contains("#!/bin/sh"));
             assert!(hook.contains("check \"$1\""));
@@ -428,14 +436,15 @@ mod tests {
         #[test]
         fn converts_windows_paths() {
             let path = PathBuf::from("C:\\Program Files\\cc-check.exe");
-            let hook = create_unix_hook(&path).unwrap();
+            let hook = create_unix_hook(&path).expect("should create unix hook for windows path");
             assert!(hook.contains("C:/Program Files/cc-check.exe"));
         }
 
         #[test]
         fn handles_paths_with_spaces() {
             let path = PathBuf::from("/path with spaces/cc-check");
-            let hook = create_unix_hook(&path).unwrap();
+            let hook =
+                create_unix_hook(&path).expect("should create unix hook for path with spaces");
             assert!(hook.contains("'/path with spaces/cc-check'"));
         }
     }
@@ -446,7 +455,8 @@ mod tests {
         #[test]
         fn wraps_paths_in_quotes() {
             let path = PathBuf::from("C:\\Program Files\\cc-check.exe");
-            let hook = create_windows_hook(&path).unwrap();
+            let hook = create_windows_hook(&path)
+                .expect("should create windows hook for path with spaces");
             assert!(hook.contains("\"C:\\Program Files\\cc-check.exe\""));
             assert!(hook.contains("@echo off"));
             assert!(hook.contains("check \"%~1\""));
@@ -455,14 +465,16 @@ mod tests {
         #[test]
         fn escapes_quotes_in_paths() {
             let path = PathBuf::from("C:\\path\"with\"quotes\\cc-check.exe");
-            let hook = create_windows_hook(&path).unwrap();
+            let hook = create_windows_hook(&path)
+                .expect("should create windows hook for path with quotes");
             assert!(hook.contains("\"C:\\path\"\"with\"\"quotes\\cc-check.exe\""));
         }
 
         #[test]
         fn handles_paths_with_spaces() {
             let path = PathBuf::from("C:\\My Programs\\cc-check.exe");
-            let hook = create_windows_hook(&path).unwrap();
+            let hook = create_windows_hook(&path)
+                .expect("should create windows hook for path with spaces");
             assert!(hook.contains("\"C:\\My Programs\\cc-check.exe\""));
         }
     }

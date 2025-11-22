@@ -17,41 +17,132 @@ A cross-platform Rust-based tool to validate git commit messages against the [Co
 
 ## Installation
 
-### Prerequisites
+`cc-check` works on **Windows**, **Linux**, and **macOS**. Install it using your existing package manager, then set up git hooks for automatic validation.
 
-- Rust and Cargo installed ([rustup.rs](https://rustup.rs/))
-- Git installed
+### Why Multiple Package Managers?
 
-### Cross-Platform Support
+We publish to npm, crates.io, and PyPI so you can use **your existing package manager** without adding dependencies to your project. A Node.js project doesn't need Rust installed, and a Python project doesn't need npm.
 
-`cc-check` works on **Windows**, **Linux**, and **macOS**. The installation process is the same on all platforms.
+### 📦 Install with Your Package Manager
 
-### Install the Git Hook
-
-The easiest way to install the git hook is using the built-in install command:
-
+**Node.js/npm projects:**
 ```bash
-# Build and install (recommended)
-cargo run --release -- install
+npm install --save-dev @arvid-berndtsson/cc-check
+```
 
-# Or if already built
-cargo build --release
-./target/release/cc-check install
+**Rust/Cargo projects:**
+```bash
+cargo install cc-check
+```
+
+**Python projects:**
+```bash
+pip install cc-check
+```
+
+### 🔧 Set Up Git Hooks (Recommended)
+
+After installing, set up git hooks for automatic validation on every commit:
+
+**Quick setup (direct git hook):**
+```bash
+cc-check install
 ```
 
 This will:
-- Build the Rust binary in release mode (unless `--no-build` is used)
+- Install a cross-platform commit-msg hook in your `.git/hooks/` directory
+- Backup any existing commit-msg hook
+- Work on Windows, Linux, and macOS
+
+**Or integrate with your existing workflow:**
+- **npm/Node.js projects**: See [Husky integration](#option-1-husky-npmnodejs-projects---recommended) below
+- **Python projects**: See [pre-commit integration](#option-2-pre-commit-framework-pythonmulti-language) below
+
+### 🔧 Integration Options
+
+#### Option 1: Husky (npm/Node.js projects - Recommended)
+
+Most JavaScript/TypeScript projects use [husky](https://typicode.github.io/husky/) for git hooks:
+
+```bash
+# Install husky and cc-check
+npm install --save-dev @arvid-berndtsson/cc-check husky
+
+# Initialize husky (if not already done)
+npx husky init
+
+# Add commit-msg hook
+echo "npx cc-check check \$1" > .husky/commit-msg
+```
+
+Or add to your `package.json`:
+```json
+{
+  "scripts": {
+    "prepare": "husky install"
+  }
+}
+```
+
+#### Option 2: pre-commit Framework (Python/Multi-language)
+
+The [pre-commit](https://pre-commit.com/) framework works with any language:
+
+```bash
+# Install
+pip install cc-check pre-commit
+
+# Add to .pre-commit-config.yaml
+cat >> .pre-commit-config.yaml << 'EOF'
+repos:
+  - repo: local
+    hooks:
+      - id: cc-check
+        name: cc-check
+        entry: cc-check check
+        language: system
+        stages: [commit-msg]
+        pass_filenames: true
+EOF
+
+# Install hooks
+pre-commit install --hook-type commit-msg
+```
+
+#### Option 3: Direct Git Hook (Universal)
+
+Works with any project type:
+
+```bash
+cc-check install
+```
+
+This will:
 - Install a cross-platform commit-msg hook in your `.git/hooks/` directory
 - Backup any existing commit-msg hook
 - Work on Windows, Linux, and macOS
 
 **Note:** On Windows, the hook uses a `.bat` file if needed, but Git Bash (included with Git for Windows) can also run `.sh` hooks.
 
+### Build from Source
+
+If you want to build from source (requires Rust and Cargo):
+
+```bash
+# Clone the repository
+git clone https://github.com/arvid-berndtsson/cc-check.git
+cd cc-check
+
+# Build and install
+cargo build --release
+./target/release/cc-check install
+```
+
 ## Usage
 
-### As a Git Hook (Automatic)
+### As a Git Hook (Recommended)
 
-Once installed, the hook will automatically validate commit messages when you run `git commit`. Invalid messages will be rejected.
+Once you've set up git hooks (via `cc-check install` or integration with husky/pre-commit), the hook will **automatically validate commit messages** when you run `git commit`. Invalid messages will be rejected.
 
 ```bash
 # ❌ This will be rejected
@@ -61,9 +152,9 @@ git commit -m "invalid commit message"
 git commit -m "feat: add new feature"
 ```
 
-### As a Standalone Tool
+### As a CLI Tool (Manual Validation)
 
-You can also use the checker directly:
+You can also use `cc-check` directly to validate commit messages manually:
 
 ```bash
 # Check a commit message file
@@ -71,6 +162,9 @@ cc-check check .git/COMMIT_EDITMSG
 
 # Or use backward-compatible syntax (file path as first argument)
 cc-check .git/COMMIT_EDITMSG
+
+# Check from stdin
+echo "feat: add feature" | cc-check check
 
 # With JSON output
 cc-check check --format json .git/COMMIT_EDITMSG
@@ -214,50 +308,42 @@ This project is configured for multi-language distribution. See [PUBLISHING.md](
 
 See [PUBLISHING.md](PUBLISHING.md) for detailed instructions.
 
-## Using from Different Language Ecosystems
+## Native Workflow Integration
 
-`cc-check` can be used from any language ecosystem that can execute binaries:
+`cc-check` integrates seamlessly into your existing development workflow:
 
-### Rust
+### Node.js / TypeScript Projects
 
-```toml
-# Cargo.toml
-[dependencies]
-cc-check = "0.1.0"  # When published to crates.io
-```
-
-Or use as a binary:
+**With Husky (Recommended):**
 ```bash
-cargo install cc-check
-cc-check check .git/COMMIT_EDITMSG
+npm install --save-dev @arvid-berndtsson/cc-check husky
+npx husky init
+echo "npx cc-check check \$1" > .husky/commit-msg
 ```
 
-### Node.js / npm
-
-Install as a binary dependency:
-```bash
-npm install --save-dev cc-check
-npx cc-check check .git/COMMIT_EDITMSG
-```
-
-Or use in package.json scripts:
+**With npm scripts:**
 ```json
 {
   "scripts": {
+    "prepare": "husky install",
     "commit-msg": "cc-check check"
+  },
+  "devDependencies": {
+    "@arvid-berndtsson/cc-check": "^0.1.0",
+    "husky": "^8.0.0"
   }
 }
 ```
 
-### Python
-
-Install via pip (when available):
+**Direct git hook (no husky needed):**
 ```bash
-pip install cc-check
-cc-check check .git/COMMIT_EDITMSG
+npm install --save-dev @arvid-berndtsson/cc-check
+npx cc-check install
 ```
 
-Or use as a pre-commit hook:
+### Python Projects
+
+**With pre-commit (Recommended):**
 ```yaml
 # .pre-commit-config.yaml
 repos:
@@ -268,6 +354,42 @@ repos:
         entry: cc-check check
         language: system
         stages: [commit-msg]
+        pass_filenames: true
+```
+
+```bash
+pip install cc-check pre-commit
+pre-commit install --hook-type commit-msg
+```
+
+**Direct git hook (no pre-commit needed):**
+```bash
+pip install cc-check
+cc-check install
+```
+
+### Rust Projects
+
+**Install:**
+```bash
+cargo install cc-check
+```
+
+**Set up git hook:**
+```bash
+cc-check install  # Sets up git hook automatically
+```
+
+**As a dev dependency (alternative):**
+```toml
+# Cargo.toml
+[dev-dependencies]
+cc-check = "0.1.0"
+```
+
+Then set up the hook:
+```bash
+cargo run --bin cc-check -- install
 ```
 
 ### Go

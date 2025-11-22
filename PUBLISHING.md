@@ -6,7 +6,7 @@ This document explains how to publish `cc-check` to multiple package registries 
 
 `cc-check` is published to:
 1. **crates.io** - For Rust users (`cargo install cc-check`)
-2. **npm** - For Node.js/JavaScript users (`npm install cc-check`)
+2. **npm** - For Node.js/JavaScript users (`npm install @arvid-berndtsson/cc-check`)
 3. **PyPI** - For Python users (`pip install cc-check`)
 4. **GitHub Releases** - Pre-built binaries for all platforms
 

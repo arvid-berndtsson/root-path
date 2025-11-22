@@ -1,0 +1,9 @@
+# Exclude npm-specific files from Rust crate
+bin/
+package.json
+pyproject.toml
+cc_check/
+scripts/
+.cursor/
+.markdownlint.json
+

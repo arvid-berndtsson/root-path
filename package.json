@@ -1,10 +1,10 @@
 {
-  "name": "cc-check",
+  "name": "@arvid-berndtsson/cc-check",
   "version": "0.1.0",
   "description": "Cross-platform conventional commit checker for git commit messages",
   "bin": {
-    "cc-check": "./bin/cc-check",
-    "postinstall": "./bin/postinstall"
+    "cc-check": "bin/cc-check",
+    "postinstall": "bin/postinstall"
   },
   "files": [
     "bin",
@@ -16,7 +16,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/arvid-berndtsson/cc-check.git"
+    "url": "git+https://github.com/arvid-berndtsson/cc-check.git"
   },
   "keywords": [
     "conventional-commits",
@@ -42,4 +42,3 @@
     "arm64"
   ]
 }
-

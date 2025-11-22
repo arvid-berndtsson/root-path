@@ -1,0 +1,21 @@
+{
+  "default": true,
+  "MD041": false,
+  "MD012": false,
+  "MD013": {
+    "line_length": 120
+  },
+  "files": {
+    "LICENSE": {
+      "MD041": false,
+      "MD012": false
+    },
+    "README.md": {
+      "MD013": false,
+      "MD031": false,
+      "MD032": false,
+      "MD040": false
+    }
+  }
+}
+
