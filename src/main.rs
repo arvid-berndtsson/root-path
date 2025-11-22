@@ -2,7 +2,7 @@ use anyhow::{bail, Context, Result};
 use clap::{Parser, Subcommand};
 use serde::Serialize;
 use std::fs;
-use std::io::{self, Read};
+use std::io::{self, IsTerminal, Read};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -329,7 +329,7 @@ fn check_commit(options: CheckOptions) -> Result<()> {
     let message = if let Some(path) = &options.commit_msg_file {
         fs::read_to_string(path)
             .with_context(|| format!("failed to read commit message file: {}", path.display()))?
-    } else if atty::isnt(atty::Stream::Stdin) {
+    } else if !io::stdin().is_terminal() {
         // Read from stdin if it's not a TTY (i.e., piped input)
         let mut buffer = String::new();
         io::stdin()
