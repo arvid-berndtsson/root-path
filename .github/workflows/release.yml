@@ -350,6 +350,25 @@ jobs:
         id: tag
         run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
+      - name: Update version in pyproject.toml
+        run: |
+          TAG="${{ steps.tag.outputs.TAG }}"
+          # Strip 'v' prefix from tag for version (e.g., 'v0.1.0' -> '0.1.0')
+          VERSION="${TAG#v}"
+          # Update version in pyproject.toml using sed
+          sed -i 's/^version = ".*"/version = "'"$VERSION"'"/' pyproject.toml
+          echo "Updated pyproject.toml version to $VERSION"
+
+      - name: Verify pyproject.toml version
+        run: |
+          TAG="${{ steps.tag.outputs.TAG }}"
+          VERSION="${TAG#v}"
+          if ! grep -q 'version = "'"$VERSION"'"' pyproject.toml; then
+            echo "Error: Failed to update version in pyproject.toml"
+            exit 1
+          fi
+          echo "Verified pyproject.toml version is $VERSION"
+
       - name: Download binaries from GitHub Release
         uses: ./.github/actions/download-binaries
         with:
