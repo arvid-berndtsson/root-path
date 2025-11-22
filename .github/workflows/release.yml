@@ -351,10 +351,12 @@ jobs:
           # Ensure npm is configured to use the registry
           npm config set registry https://registry.npmjs.org/
           # Trusted Publishing uses OIDC token automatically when id-token: write is set
+          # The OIDC token is available via ACTIONS_ID_TOKEN_REQUEST_TOKEN and ACTIONS_ID_TOKEN_REQUEST_URL
           # Verify we can see the package (read access works)
           PACKAGE_NAME=$(npm pkg get name | tr -d '"')
           echo "Checking package: ${PACKAGE_NAME}"
           npm view "${PACKAGE_NAME}" version || echo "Package check completed"
+          echo "Registry configured: $(npm config get registry)"
 
       - name: Publish to npm (Trusted Publishing)
         run: |
