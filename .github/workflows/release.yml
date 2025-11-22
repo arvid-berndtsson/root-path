@@ -187,6 +187,29 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Get release tag
+        id: tag
+        run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Update version in Cargo.toml
+        run: |
+          TAG="${{ steps.tag.outputs.TAG }}"
+          # Strip 'v' prefix from tag for version (e.g., 'v0.1.0' -> '0.1.0')
+          VERSION="${TAG#v}"
+          # Update version in Cargo.toml using sed
+          sed -i "s/^version = \".*\"/version = \"$VERSION\"/" Cargo.toml
+          echo "Updated Cargo.toml version to $VERSION"
+
+      - name: Verify Cargo.toml version
+        run: |
+          TAG="${{ steps.tag.outputs.TAG }}"
+          VERSION="${TAG#v}"
+          if ! grep -q "version = \"$VERSION\"" Cargo.toml; then
+            echo "Error: Failed to update version in Cargo.toml"
+            exit 1
+          fi
+          echo "Verified Cargo.toml version is $VERSION"
+
       - name: Publish to crates.io
         run: cargo publish --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
@@ -207,6 +230,26 @@ jobs:
       - name: Get release tag
         id: tag
         run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Update version in package.json
+        run: |
+          TAG="${{ steps.tag.outputs.TAG }}"
+          # Strip 'v' prefix from tag for version (e.g., 'v0.1.0' -> '0.1.0')
+          VERSION="${TAG#v}"
+          # Update version in package.json using jq (comes with setup-node)
+          npm pkg set version="$VERSION"
+          echo "Updated package.json version to $VERSION"
+
+      - name: Verify package.json version
+        run: |
+          TAG="${{ steps.tag.outputs.TAG }}"
+          VERSION="${TAG#v}"
+          CURRENT_VERSION=$(npm pkg get version | tr -d '"')
+          if [ "$CURRENT_VERSION" != "$VERSION" ]; then
+            echo "Error: package.json version is $CURRENT_VERSION, expected $VERSION"
+            exit 1
+          fi
+          echo "Verified package.json version is $VERSION"
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -229,7 +272,6 @@ jobs:
 
       - name: Publish to npm
         run: npm publish --access=public
-
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
