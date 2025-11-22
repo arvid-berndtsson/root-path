@@ -256,9 +256,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          registry-url: 'https://registry.npmjs.org'
-          # Trusted Publishing uses OIDC - no token needed
-          # The id-token: write permission enables automatic OIDC authentication
+          # Don't set registry-url for Trusted Publishing - npm will use OIDC automatically
 
       - name: Get release tag
         id: tag
@@ -348,10 +346,20 @@ jobs:
             echo "⚠ Package not found (will be first publish)"
           fi
 
+      - name: Configure npm for Trusted Publishing
+        run: |
+          # Ensure npm is configured to use the registry
+          npm config set registry https://registry.npmjs.org/
+          # Trusted Publishing uses OIDC token automatically when id-token: write is set
+          # Verify we can see the package (read access works)
+          PACKAGE_NAME=$(npm pkg get name | tr -d '"')
+          echo "Checking package: ${PACKAGE_NAME}"
+          npm view "${PACKAGE_NAME}" version || echo "Package check completed"
+
       - name: Publish to npm (Trusted Publishing)
         run: |
-          # Trusted Publishing should work automatically with id-token: write permission
-          # If this fails with 404, verify Trusted Publisher is configured in npm settings
+          # Trusted Publishing uses OIDC automatically with id-token: write permission
+          # The OIDC token is provided by GitHub Actions automatically
           npm publish --access=public --provenance
         continue-on-error: false
 
