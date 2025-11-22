@@ -257,6 +257,8 @@ jobs:
         with:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
+          # Trusted Publishing uses OIDC - no token needed
+          # The id-token: write permission enables automatic OIDC authentication
 
       - name: Get release tag
         id: tag
@@ -288,12 +290,17 @@ jobs:
           VERSION="${TAG#v}"
           PACKAGE_NAME=$(npm pkg get name | tr -d '"')
           
-          # Check if version exists using npm registry API
-          if npm view "${PACKAGE_NAME}@${VERSION}" version >/dev/null 2>&1; then
-            echo "::error::Version ${VERSION} of ${PACKAGE_NAME} already exists on npm. Please bump the version and create a new tag."
-            exit 1
+          # Check if package exists at all (for first publish)
+          if npm view "${PACKAGE_NAME}" version >/dev/null 2>&1; then
+            # Package exists, check if this version exists
+            if npm view "${PACKAGE_NAME}@${VERSION}" version >/dev/null 2>&1; then
+              echo "::error::Version ${VERSION} of ${PACKAGE_NAME} already exists on npm. Please bump the version and create a new tag."
+              exit 1
+            fi
+            echo "Package exists, version ${VERSION} is available for publishing"
+          else
+            echo "Package ${PACKAGE_NAME} does not exist yet - this will be the first publish"
           fi
-          echo "Version ${VERSION} is available for publishing"
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -327,8 +334,26 @@ jobs:
           EOF
           chmod +x bin/cc-check
 
+      - name: Verify npm configuration
+        run: |
+          echo "Package name: $(npm pkg get name | tr -d '"')"
+          echo "Package version: $(npm pkg get version | tr -d '"')"
+          echo "Registry: $(npm config get registry)"
+          # Check if package exists
+          PACKAGE_NAME=$(npm pkg get name | tr -d '"')
+          if npm view "${PACKAGE_NAME}" version >/dev/null 2>&1; then
+            echo "✓ Package exists on npm"
+            npm view "${PACKAGE_NAME}" version
+          else
+            echo "⚠ Package not found (will be first publish)"
+          fi
+
       - name: Publish to npm (Trusted Publishing)
-        run: npm publish --access=public --provenance
+        run: |
+          # Trusted Publishing should work automatically with id-token: write permission
+          # If this fails with 404, verify Trusted Publisher is configured in npm settings
+          npm publish --access=public --provenance
+        continue-on-error: false
 
   publish-pypi:
     name: Publish to PyPI

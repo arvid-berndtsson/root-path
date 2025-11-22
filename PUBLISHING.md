@@ -56,7 +56,25 @@ This project uses **Trusted Publishing** for crates.io, npm, and PyPI, which eli
      - **Environment**: (leave empty unless using GitHub Environments)
    - Click **Add**
 
-3. **Remove `NPM_TOKEN` secret** from GitHub (no longer needed)
+3. **Verify the trusted publisher is active**:
+   - The publisher should show as "Active" in the list
+   - If it shows "Pending", wait a few minutes for it to activate
+
+4. **Verify Trusted Publisher is active**:
+   - The publisher should show as "Active" in the list
+   - If it shows "Pending", wait a few minutes for it to activate
+   - Ensure the workflow file path matches exactly: `.github/workflows/release.yml`
+
+5. **Troubleshooting 404 errors**:
+   - If you get a 404 error when publishing, verify:
+     - Trusted Publisher is "Active" (not "Pending")
+     - Workflow file path matches exactly (including `.github/` prefix)
+     - Repository name matches exactly: `arvid-berndtsson/cc-check`
+     - The workflow has `id-token: write` permission
+   - For scoped packages, ensure `--access=public` is included in publish command
+   - If package already exists on npm, the 404 might indicate authentication issue
+
+6. **Remove `NPM_TOKEN` secret** from GitHub (no longer needed)
 
 #### PyPI Trusted Publishing
 
