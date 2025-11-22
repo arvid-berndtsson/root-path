@@ -210,6 +210,19 @@ jobs:
           fi
           echo "Verified Cargo.toml version is $VERSION"
 
+      - name: Check if version already exists on crates.io
+        run: |
+          TAG="${{ steps.tag.outputs.TAG }}"
+          VERSION="${TAG#v}"
+          CRATE_NAME=$(grep '^name = ' Cargo.toml | sed 's/name = "\(.*\)"/\1/')
+          
+          # Check if version exists using crates.io API
+          if curl -s "https://crates.io/api/v1/crates/${CRATE_NAME}/${VERSION}" | grep -q '"version"'; then
+            echo "::error::Version ${VERSION} of ${CRATE_NAME} already exists on crates.io. Please bump the version and create a new tag."
+            exit 1
+          fi
+          echo "Version ${VERSION} is available for publishing"
+
       - name: Publish to crates.io
         run: cargo publish --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
@@ -250,6 +263,19 @@ jobs:
             exit 1
           fi
           echo "Verified package.json version is $VERSION"
+
+      - name: Check if version already exists on npm
+        run: |
+          TAG="${{ steps.tag.outputs.TAG }}"
+          VERSION="${TAG#v}"
+          PACKAGE_NAME=$(npm pkg get name | tr -d '"')
+          
+          # Check if version exists using npm registry API
+          if npm view "${PACKAGE_NAME}@${VERSION}" version >/dev/null 2>&1; then
+            echo "::error::Version ${VERSION} of ${PACKAGE_NAME} already exists on npm. Please bump the version and create a new tag."
+            exit 1
+          fi
+          echo "Version ${VERSION} is available for publishing"
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
