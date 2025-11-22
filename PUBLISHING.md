@@ -64,13 +64,13 @@ This project uses **Trusted Publishing** for both crates.io and npm, which elimi
 - **npm**: Create account at https://www.npmjs.com
 - **PyPI**: Create account at https://pypi.org, generate API token (still requires token)
 
-### 3. GitHub Secrets (Legacy/Alternative)
+### 3. GitHub Secrets
 
-If you prefer to use tokens instead of Trusted Publishing:
+Only one secret is required (PyPI doesn't support Trusted Publishing yet):
 
-- `CARGO_REGISTRY_TOKEN` - crates.io API token (only needed if not using Trusted Publishing)
-- `NPM_TOKEN` - npm access token (only needed if not using Trusted Publishing)
-- `PYPI_API_TOKEN` - PyPI API token (required, no Trusted Publishing available)
+- `PYPI_API_TOKEN` - PyPI API token
+
+Add this secret to your GitHub repository (`Settings` → `Secrets and variables` → `Actions`)
 
 ## Publishing Process
 
@@ -117,6 +117,7 @@ If you prefer to publish manually:
 ### crates.io
 
 ```bash
+# Only needed for initial manual publish before setting up Trusted Publishing
 cargo login <your-token>
 cargo publish
 ```
@@ -214,12 +215,14 @@ Update all version numbers in:
 ### crates.io
 
 - **Error**: "crate already exists" - Version already published, bump version
-- **Error**: "invalid token" - Check `CARGO_REGISTRY_TOKEN` secret
+- **Error**: "authentication failed" - Verify Trusted Publisher is configured correctly in crate settings
+- **Error**: "repository not linked" - Link your GitHub repository in crate settings
 
 ### npm
 
 - **Error**: "package name taken" - Choose different name or use scoped package (`@your-org/cc-check`)
-- **Error**: "unauthorized" - Check `NPM_TOKEN` secret
+- **Error**: "unauthorized" - Verify Trusted Publisher is configured correctly in npm settings
+- **Error**: "OTP required" - Trusted Publishing should eliminate this; verify OIDC setup
 
 ### PyPI
 
@@ -228,8 +231,9 @@ Update all version numbers in:
 
 ## Next Steps
 
-1. Set up GitHub Secrets
-2. Create accounts on all registries
-3. Test the workflow with a pre-release version (e.g., `0.1.0-alpha.1`)
-4. Publish first stable release
+1. Set up Trusted Publishing for crates.io and npm (see Prerequisites above)
+2. Add `PYPI_API_TOKEN` secret to GitHub (only secret needed)
+3. Create accounts on all registries
+4. Test the workflow with a pre-release version (e.g., `0.1.0-alpha.1`)
+5. Publish first stable release
 
