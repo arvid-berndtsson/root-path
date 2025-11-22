@@ -168,9 +168,15 @@ jobs:
           # Create zip for Windows
           zip -j release/cc-check-windows-x86_64.zip release/cc-check-windows-x86_64.exe
 
+      - name: Get release tag
+        id: tag
+        run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ steps.tag.outputs.TAG }}
+          name: Release ${{ steps.tag.outputs.TAG }}
           files: release/*
           generate_release_notes: true
         env:
@@ -224,7 +230,7 @@ jobs:
           echo "Version ${VERSION} is available for publishing"
 
       - name: Publish to crates.io
-        run: cargo publish --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish --token ${{ secrets.CARGO_REGISTRY_TOKEN }} --allow-dirty
 
   publish-npm:
     name: Publish to npm
@@ -295,6 +301,19 @@ jobs:
         run: |
           cp target/release/postinstall bin/postinstall
           chmod +x bin/postinstall
+
+      - name: Create placeholder bin/cc-check for npm validation
+        run: |
+          # Create a simple placeholder script that will be replaced by postinstall
+          # npm requires the bin file to exist during publish validation
+          # This will be replaced by the postinstall script on user's machine
+          cat > bin/cc-check << 'EOF'
+          #!/bin/sh
+          # Placeholder - will be replaced by postinstall script
+          echo "Error: cc-check binary not found. Run 'npm install' to download the correct binary for your platform." >&2
+          exit 1
+          EOF
+          chmod +x bin/cc-check
 
       - name: Publish to npm
         run: npm publish --access=public
