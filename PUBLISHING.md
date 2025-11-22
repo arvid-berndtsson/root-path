@@ -66,13 +66,18 @@ This project uses **Trusted Publishing** for crates.io, npm, and PyPI, which eli
    - Ensure the workflow file path matches exactly: `.github/workflows/release.yml`
 
 5. **Troubleshooting 404 errors**:
-   - If you get a 404 error when publishing, verify:
-     - Trusted Publisher is "Active" (not "Pending")
-     - Workflow file path matches exactly (including `.github/` prefix)
-     - Repository name matches exactly: `arvid-berndtsson/cc-check`
-     - The workflow has `id-token: write` permission
-   - For scoped packages, ensure `--access=public` is included in publish command
-   - If package already exists on npm, the 404 might indicate authentication issue
+   - If you get a 404 error when publishing (even though package exists), this typically means:
+     - **Trusted Publisher authentication isn't working** - Verify it's "Active" in npm settings
+     - **Workflow file path mismatch** - Must be exactly `.github/workflows/release.yml`
+     - **OIDC token not being used** - npm should automatically detect it with `id-token: write`
+   - **Common fixes**:
+     - Wait 5-10 minutes after setting up Trusted Publisher for it to fully activate
+     - Verify the Trusted Publisher shows as "Active" (refresh the page)
+     - Double-check the workflow filename matches exactly: `release.yml` (not `release.yaml`)
+     - Ensure `publishConfig.access` is set to `"public"` in package.json
+   - **If still failing**: npm Trusted Publishing may have issues with packages initially published with tokens. Consider:
+     - Temporarily using an npm token for publishing (less secure but works)
+     - Contacting npm support if Trusted Publisher is active but still failing
 
 6. **Remove `NPM_TOKEN` secret** from GitHub (no longer needed)
 
