@@ -14,7 +14,7 @@ This document explains how to publish `cc-check` to multiple package registries 
 
 ### 1. Trusted Publishing Setup (Recommended)
 
-This project uses **Trusted Publishing** for both crates.io and npm, which eliminates the need for long-lived API tokens and significantly improves security. No GitHub secrets are required for publishing!
+This project uses **Trusted Publishing** for crates.io, npm, and PyPI, which eliminates the need for long-lived API tokens and significantly improves security. **No GitHub secrets are required for publishing!**
 
 #### crates.io Trusted Publishing
 
@@ -58,19 +58,34 @@ This project uses **Trusted Publishing** for both crates.io and npm, which elimi
 
 3. **Remove `NPM_TOKEN` secret** from GitHub (no longer needed)
 
+#### PyPI Trusted Publishing
+
+1. **Go to PyPI Trusted Publishers**:
+   - Visit: https://pypi.org/manage/account/publishing/
+   - Or navigate: PyPI → Your Profile → Account settings → Publishing
+
+2. **Add a new trusted publisher**:
+   - Click **Add a new pending publisher**
+   - Select the **GitHub** tab
+   - Fill in:
+     - **PyPI Project Name**: `cc-check`
+     - **Owner**: `arvid-berndtsson`
+     - **Repository Name**: `cc-check`
+     - **Workflow Filename**: `.github/workflows/release.yml`
+     - **Environment Name**: (leave empty unless using GitHub Environments)
+   - Click **Add**
+
+3. **Remove `PYPI_API_TOKEN` secret** from GitHub (no longer needed)
+
 ### 2. Package Registry Accounts
 
 - **crates.io**: Create account at https://crates.io (for initial manual publish)
 - **npm**: Create account at https://www.npmjs.com
-- **PyPI**: Create account at https://pypi.org, generate API token (still requires token)
+- **PyPI**: Create account at https://pypi.org
 
 ### 3. GitHub Secrets
 
-Only one secret is required (PyPI doesn't support Trusted Publishing yet):
-
-- `PYPI_API_TOKEN` - PyPI API token
-
-Add this secret to your GitHub repository (`Settings` → `Secrets and variables` → `Actions`)
+**No secrets required!** All publishing uses Trusted Publishing with OIDC authentication.
 
 ## Publishing Process
 
@@ -227,7 +242,8 @@ Update all version numbers in:
 ### PyPI
 
 - **Error**: "File already exists" - Version already published, bump version
-- **Error**: "invalid credentials" - Check `PYPI_API_TOKEN` secret
+- **Error**: "authentication failed" - Verify Trusted Publisher is configured correctly in PyPI settings
+- **Error**: "publisher not found" - Ensure the trusted publisher is added and approved in PyPI
 
 ## Next Steps
 
