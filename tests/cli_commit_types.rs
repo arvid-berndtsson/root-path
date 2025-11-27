@@ -167,3 +167,36 @@ fn cli_accepts_scope_with_numbers() {
         .assert()
         .success();
 }
+
+/// Comprehensive test to verify all standard conventional commit types are supported.
+/// This test explicitly verifies all 11 types from the Angular convention
+/// (widely adopted with Conventional Commits): feat, fix, docs, style, refactor,
+/// perf, test, build, ci, chore, revert.
+/// Reference: https://www.conventionalcommits.org/
+/// Reference: https://github.com/angular/angular/blob/main/CONTRIBUTING.md#type
+#[test]
+fn cli_accepts_all_standard_conventional_commit_types() {
+    // All 11 standard conventional commit types from the Angular convention
+    let types = [
+        ("feat", "add new feature"),
+        ("fix", "correct bug"),
+        ("docs", "update documentation"),
+        ("style", "format code"),
+        ("refactor", "restructure code"),
+        ("perf", "improve performance"),
+        ("test", "add tests"),
+        ("build", "update build system"),
+        ("ci", "update CI configuration"),
+        ("chore", "update dependencies"),
+        ("revert", "revert previous change"),
+    ];
+
+    for (commit_type, description) in types.iter() {
+        let message = format!("{}: {}", commit_type, description);
+        let file = write_temp(&message);
+        Command::new(cargo_bin!("cc-check"))
+            .arg(file.path())
+            .assert()
+            .success();
+    }
+}

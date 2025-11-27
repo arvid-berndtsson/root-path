@@ -311,6 +311,10 @@ exec {} check "$1"
 }
 
 fn check_commit(options: CheckOptions) -> Result<()> {
+    // Default allowed types follow the Angular convention (widely adopted with Conventional Commits).
+    // This includes all 11 standard types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert.
+    // Reference: https://www.conventionalcommits.org/
+    // Reference: https://github.com/angular/angular/blob/main/CONTRIBUTING.md#type
     let allowed_types_default = [
         "feat", "fix", "chore", "docs", "style", "refactor", "perf", "test", "build", "ci",
         "revert",

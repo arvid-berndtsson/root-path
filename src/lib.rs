@@ -103,6 +103,9 @@ pub fn find_repo_root() -> Result<PathBuf> {
 mod tests {
     use super::*;
 
+    /// Returns all standard conventional commit types from the Angular convention.
+    /// This list includes all 11 standard types that are widely adopted with Conventional Commits.
+    /// Reference: https://www.conventionalcommits.org/
     fn allowed() -> Vec<String> {
         vec![
             "feat", "fix", "chore", "docs", "style", "refactor", "perf", "test", "build", "ci",
