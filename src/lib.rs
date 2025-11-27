@@ -2,6 +2,8 @@ use anyhow::{bail, Result};
 use regex::Regex;
 use std::path::PathBuf;
 
+pub mod config;
+
 #[derive(Debug, thiserror::Error)]
 pub enum ValidationError {
     #[error("empty commit message")]

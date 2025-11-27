@@ -173,6 +173,34 @@ cc-check check --format json .git/COMMIT_EDITMSG
 cc-check check --extra-types "wip,release" .git/COMMIT_EDITMSG
 ```
 
+### Configuration File
+
+You can customize `cc-check` behavior by creating a `.cc-check.toml` file in your repository root:
+
+```toml
+# Additional commit types to allow beyond the default types
+# Default types: feat, fix, chore, docs, style, refactor, perf, test, build, ci, revert
+extra_types = ["wip", "release"]
+
+# Maximum subject length (0 to disable)
+# Default: 72
+max_subject = 72
+
+# Disallow trailing period in subject
+# Default: true
+no_trailing_period = true
+
+# Ignore comment lines (starting with '#') in commit message
+# Default: true
+ignore_comments = true
+
+# Allow merge-like messages (e.g., 'Merge ...' or 'Revert ...') to pass
+# Default: true
+allow_merge_commits = true
+```
+
+**Note:** Command-line flags always take precedence over config file settings.
+
 ### Command-Line Flags
 
 Use `cc-check check --help` to see all available flags:
@@ -182,6 +210,8 @@ Use `cc-check check --help` to see all available flags:
 - `--no-trailing-period` - Disallow trailing period (default: true)
 - `--format json` - Machine-readable output (`{"ok":true}` or `{ "ok": false, "error": "..." }`)
 - `--allow-merge-commits` - Allow merge/revert message validation (default: true)
+
+All flags override settings from the config file if both are present.
 
 ### Commit Message Format
 
