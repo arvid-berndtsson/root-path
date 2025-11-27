@@ -1,10 +1,9 @@
-# Configuration file for cc-check
-# This file allows you to customize the behavior of commit message validation
+# Example configuration file for cc-check
+# Copy this file to .cc-check.toml in your repository root to customize behavior
 
 # Additional commit types to allow beyond the default types
 # Default types: feat, fix, chore, docs, style, refactor, perf, test, build, ci, revert
-# Example: extra_types = ["wip", "release"]
-extra_types = []
+extra_types = ["wip", "release"]
 
 # Maximum subject length (0 to disable)
 # Default: 72

@@ -121,7 +121,7 @@ impl CheckOptions {
             format: OutputFormat::Text,
         }
     }
-    
+
     /// Create options from CLI args and config file
     /// CLI args take precedence over config file settings
     fn from_cli_and_config(
@@ -138,7 +138,7 @@ impl CheckOptions {
             .ok()
             .flatten()
             .unwrap_or_default();
-        
+
         // Merge CLI args with config file (CLI takes precedence)
         let extra_types = cli_extra_types.or_else(|| {
             if config.extra_types.is_empty() {
@@ -147,23 +147,21 @@ impl CheckOptions {
                 Some(config.extra_types.join(","))
             }
         });
-        
-        let max_subject = cli_max_subject
-            .or(config.max_subject)
-            .unwrap_or(72);
-        
+
+        let max_subject = cli_max_subject.or(config.max_subject).unwrap_or(72);
+
         let no_trailing_period = cli_no_trailing_period
             .or(config.no_trailing_period)
             .unwrap_or(true);
-        
+
         let ignore_comments = cli_ignore_comments
             .or(config.ignore_comments)
             .unwrap_or(true);
-        
+
         let allow_merge_commits = cli_allow_merge_commits
             .or(config.allow_merge_commits)
             .unwrap_or(true);
-        
+
         Self {
             commit_msg_file,
             extra_types,
