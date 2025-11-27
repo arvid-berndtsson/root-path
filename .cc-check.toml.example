@@ -1,0 +1,22 @@
+# Example configuration file for cc-check
+# Copy this file to .cc-check.toml in your repository root to customize behavior
+
+# Additional commit types to allow beyond the default types
+# Default types: feat, fix, chore, docs, style, refactor, perf, test, build, ci, revert
+extra_types = ["wip", "release"]
+
+# Maximum subject length (0 to disable)
+# Default: 72
+max_subject = 72
+
+# Disallow trailing period in subject
+# Default: true
+no_trailing_period = true
+
+# Ignore comment lines (starting with '#') in commit message
+# Default: true
+ignore_comments = true
+
+# Allow merge-like messages (e.g., 'Merge ...' or 'Revert ...') to pass
+# Default: true
+allow_merge_commits = true

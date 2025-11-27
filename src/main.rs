@@ -62,20 +62,20 @@ enum Commands {
         extra_types: Option<String>,
 
         /// Enforce max subject length (0 to disable)
-        #[arg(long, default_value_t = 72)]
-        max_subject: usize,
+        #[arg(long)]
+        max_subject: Option<usize>,
 
         /// Disallow trailing period in subject
-        #[arg(long, default_value_t = true)]
-        no_trailing_period: bool,
+        #[arg(long)]
+        no_trailing_period: Option<bool>,
 
         /// Ignore comment lines (starting with '#') in commit message
-        #[arg(long, default_value_t = true)]
-        ignore_comments: bool,
+        #[arg(long)]
+        ignore_comments: Option<bool>,
 
         /// Allow merge-like messages (e.g., 'Merge ...' or 'Revert ...') to pass
-        #[arg(long, default_value_t = true)]
-        allow_merge_commits: bool,
+        #[arg(long)]
+        allow_merge_commits: Option<bool>,
 
         /// Output format: text or json
         #[arg(long, value_name = "FORMAT", default_value = "text")]
@@ -121,6 +121,57 @@ impl CheckOptions {
             format: OutputFormat::Text,
         }
     }
+
+    /// Create options from CLI args and config file
+    /// CLI args take precedence over config file settings
+    fn from_cli_and_config(
+        commit_msg_file: Option<PathBuf>,
+        cli_extra_types: Option<String>,
+        cli_max_subject: Option<usize>,
+        cli_no_trailing_period: Option<bool>,
+        cli_ignore_comments: Option<bool>,
+        cli_allow_merge_commits: Option<bool>,
+        format: OutputFormat,
+    ) -> Self {
+        // Try to load config file
+        let config = cc_check::config::Config::load_from_repo()
+            .ok()
+            .flatten()
+            .unwrap_or_default();
+
+        // Merge CLI args with config file (CLI takes precedence)
+        let extra_types = cli_extra_types.or_else(|| {
+            if config.extra_types.is_empty() {
+                None
+            } else {
+                Some(config.extra_types.join(","))
+            }
+        });
+
+        let max_subject = cli_max_subject.or(config.max_subject).unwrap_or(72);
+
+        let no_trailing_period = cli_no_trailing_period
+            .or(config.no_trailing_period)
+            .unwrap_or(true);
+
+        let ignore_comments = cli_ignore_comments
+            .or(config.ignore_comments)
+            .unwrap_or(true);
+
+        let allow_merge_commits = cli_allow_merge_commits
+            .or(config.allow_merge_commits)
+            .unwrap_or(true);
+
+        Self {
+            commit_msg_file,
+            extra_types,
+            max_subject,
+            no_trailing_period,
+            ignore_comments,
+            allow_merge_commits,
+            format,
+        }
+    }
 }
 
 fn main() -> Result<()> {
@@ -136,7 +187,7 @@ fn main() -> Result<()> {
             ignore_comments,
             allow_merge_commits,
             format,
-        }) => check_commit(CheckOptions {
+        }) => check_commit(CheckOptions::from_cli_and_config(
             commit_msg_file,
             extra_types,
             max_subject,
@@ -144,7 +195,7 @@ fn main() -> Result<()> {
             ignore_comments,
             allow_merge_commits,
             format,
-        }),
+        )),
         None => {
             // Default behavior: check commit message (backward compatibility)
             check_commit(CheckOptions::default_with_file(cli.commit_msg_file))
